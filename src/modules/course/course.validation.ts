@@ -1,0 +1,65 @@
+import Joi from 'joi';
+
+// ─── Create Course ────────────────────────────────────────────────────────────
+
+export const createCourseSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(150).required().messages({
+    'string.empty': 'Course name is required',
+    'string.min': 'Course name must be at least 2 characters',
+    'string.max': 'Course name must not exceed 150 characters',
+    'any.required': 'Course name is required',
+  }),
+  description: Joi.string().trim().max(2000).optional().allow('', null).messages({
+    'string.max': 'Description must not exceed 2000 characters',
+  }),
+});
+
+// ─── Update Course ────────────────────────────────────────────────────────────
+
+export const updateCourseSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(150).optional().messages({
+    'string.empty': 'Course name cannot be empty',
+    'string.min': 'Course name must be at least 2 characters',
+    'string.max': 'Course name must not exceed 150 characters',
+  }),
+  description: Joi.string().trim().max(2000).optional().allow('', null).messages({
+    'string.max': 'Description must not exceed 2000 characters',
+  }),
+}).min(1).messages({
+  'object.min': 'At least one field must be provided for update',
+});
+
+// ─── List Courses (query params) ──────────────────────────────────────────────
+
+export const courseQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1).messages({
+    'number.base': 'Page must be a number',
+    'number.min': 'Page must be at least 1',
+  }),
+  limit: Joi.number().integer().min(1).max(100).default(10).messages({
+    'number.base': 'Limit must be a number',
+    'number.min': 'Limit must be at least 1',
+    'number.max': 'Limit must not exceed 100',
+  }),
+  search: Joi.string().trim().max(100).optional().allow('').messages({
+    'string.max': 'Search term must not exceed 100 characters',
+  }),
+  sortBy: Joi.string()
+    .valid('name', 'createdAt', 'updatedAt')
+    .default('createdAt')
+    .messages({
+      'any.only': 'sortBy must be one of: name, createdAt, updatedAt',
+    }),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc').messages({
+    'any.only': 'sortOrder must be asc or desc',
+  }),
+});
+
+// ─── Route params ─────────────────────────────────────────────────────────────
+
+export const courseIdParamSchema = Joi.object({
+  id: Joi.string().uuid({ version: 'uuidv4' }).required().messages({
+    'string.guid': 'Course ID must be a valid UUID',
+    'any.required': 'Course ID is required',
+  }),
+});
