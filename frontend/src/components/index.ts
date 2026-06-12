@@ -1,2 +1,5 @@
-// UI components are built in Phase 6.
-// Export shared components here as they are created.
+// ── UI primitives
+export * from './ui';
+
+// ── Auth components
+export * from './auth';
