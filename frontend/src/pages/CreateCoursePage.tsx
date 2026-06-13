@@ -28,9 +28,7 @@ export function CreateCoursePage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-2xl p-6 lg:p-8">
-
-        {/* Breadcrumb */}
+      <div className="mx-auto max-w-[1200px] w-full px-6 py-6 lg:py-8">
         <button
           type="button"
           onClick={() => navigate(ROUTES.COURSES)}
@@ -40,15 +38,11 @@ export function CreateCoursePage() {
           Back to Courses
         </button>
 
-        {/* Page header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Create Course</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Add a new course to the CMP Portal catalogue.
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Add a new course to the CMP Portal catalogue.</p>
         </div>
 
-        {/* Form card */}
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <CourseForm
             isSubmitting={isPending}
@@ -59,7 +53,6 @@ export function CreateCoursePage() {
           />
         </div>
       </div>
-
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </AppLayout>
   );

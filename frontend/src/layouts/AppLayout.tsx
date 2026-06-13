@@ -8,7 +8,6 @@ import {
   Menu,
   X,
   ChevronDown,
-  GraduationCap,
 } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { useLogout } from '../hooks/useAuth';
@@ -37,12 +36,6 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Courses',
     to: ROUTES.COURSES,
     icon: <BookOpen size={18} />,
-    roles: ['SUPER_ADMIN', 'SUB_ADMIN', 'USER'],
-  },
-  {
-    label: 'Batches',
-    to: '/batches',
-    icon: <GraduationCap size={18} />,
     roles: ['SUPER_ADMIN', 'SUB_ADMIN', 'USER'],
   },
   {

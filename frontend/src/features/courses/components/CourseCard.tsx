@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Course } from '../../../types';
 import { buildRoute } from '../../../utils/constants';
 import { CourseImage } from './CourseImage';
+import { CourseStatusBadge, deriveCourseStatus } from './CourseStatusBadge';
 import { Button } from '../../../components/ui/Button';
 
 interface CourseCardProps {
@@ -17,6 +18,9 @@ export function CourseCard({ course, canEdit, canDelete, onDelete }: CourseCardP
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Status derived from course data (no batch data available on list view — defaults to draft/upcoming)
+  const status = deriveCourseStatus(course, []);
 
   // Close menu on outside click
   useEffect(() => {
@@ -33,7 +37,7 @@ export function CourseCard({ course, canEdit, canDelete, onDelete }: CourseCardP
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-      {/* Banner image */}
+      {/* Banner */}
       <div
         className="relative h-44 cursor-pointer"
         onClick={goToDetail}
@@ -49,10 +53,7 @@ export function CourseCard({ course, canEdit, canDelete, onDelete }: CourseCardP
           <div ref={menuRef} className="absolute right-2 top-2">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen((o) => !o);
-              }}
+              onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus:outline-none"
               aria-label="Course options"
             >
@@ -61,40 +62,19 @@ export function CourseCard({ course, canEdit, canDelete, onDelete }: CourseCardP
 
             {menuOpen && (
               <div className="absolute right-0 top-8 z-20 w-40 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl shadow-black/10">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpen(false);
-                    goToDetail();
-                  }}
-                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
+                <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); goToDetail(); }}
+                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                   <Eye size={14} className="text-gray-400" /> View
                 </button>
                 {canEdit && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      navigate(buildRoute.courseEdit(course.id));
-                    }}
-                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                  >
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); navigate(buildRoute.courseEdit(course.id)); }}
+                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                     <Pencil size={14} className="text-gray-400" /> Edit
                   </button>
                 )}
                 {canDelete && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      onDelete(course);
-                    }}
-                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                  >
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(course); }}
+                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50">
                     <Trash2 size={14} className="text-red-400" /> Delete
                   </button>
                 )}
@@ -105,24 +85,27 @@ export function CourseCard({ course, canEdit, canDelete, onDelete }: CourseCardP
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-4 gap-3">
-        {/* Title */}
-        <h3
-          className="cursor-pointer text-base font-bold text-gray-900 line-clamp-2 leading-snug hover:text-amber-600 transition-colors"
-          onClick={goToDetail}
-        >
-          {course.name}
-        </h3>
+      <div className="flex flex-1 flex-col gap-2.5 p-4">
+        {/* Title + status badge */}
+        <div className="flex items-start justify-between gap-2">
+          <h3
+            className="cursor-pointer text-sm font-bold text-gray-900 line-clamp-2 leading-snug hover:text-amber-600 transition-colors flex-1"
+            onClick={goToDetail}
+          >
+            {course.name}
+          </h3>
+          <CourseStatusBadge status={status} />
+        </div>
 
         {/* Description */}
         {course.description && (
-          <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
             {course.description}
           </p>
         )}
 
-        {/* Divider + CTA */}
-        <div className="mt-auto pt-3 border-t border-gray-100">
+        {/* CTA */}
+        <div className="mt-auto border-t border-gray-100 pt-3">
           <Button
             variant="outline"
             size="sm"
@@ -130,7 +113,7 @@ export function CourseCard({ course, canEdit, canDelete, onDelete }: CourseCardP
             onClick={goToDetail}
             className="text-amber-600 border-amber-300 hover:bg-amber-50 font-semibold"
           >
-            Click here to open the course
+            Open Course
           </Button>
         </div>
       </div>

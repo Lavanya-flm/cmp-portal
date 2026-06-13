@@ -15,12 +15,7 @@ export function EditCoursePage() {
   const { toasts, addToast, removeToast } = useToast();
 
   const { data: course, isLoading, isError, error: fetchError } = useCourse(id);
-  const {
-    mutate: updateCourse,
-    isPending,
-    error: updateError,
-    reset,
-  } = useUpdateCourse(id);
+  const { mutate: updateCourse, isPending, error: updateError, reset } = useUpdateCourse(id);
 
   const handleSubmit = (data: CourseFormValues) => {
     reset();
@@ -37,9 +32,7 @@ export function EditCoursePage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-2xl p-6 lg:p-8">
-
-        {/* Breadcrumb */}
+      <div className="mx-auto max-w-[1200px] w-full px-6 py-6 lg:py-8">
         <button
           type="button"
           onClick={() => navigate(course ? buildRoute.courseDetail(id) : ROUTES.COURSES)}
@@ -49,41 +42,27 @@ export function EditCoursePage() {
           {course ? `Back to ${course.name}` : 'Back to Courses'}
         </button>
 
-        {/* Page header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Edit Course</h1>
-          {course && (
-            <p className="mt-1 text-sm text-gray-500">
-              Editing: <span className="font-medium text-gray-700">{course.name}</span>
-            </p>
-          )}
+          {course && <p className="mt-1 text-sm text-gray-500">Editing: <span className="font-medium text-gray-700">{course.name}</span></p>}
         </div>
 
-        {/* Loading skeleton */}
         {isLoading && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse">
-            <div className="flex flex-col gap-4">
-              <div className="h-4 w-1/3 rounded bg-gray-200" />
-              <div className="h-10 rounded-lg bg-gray-100" />
-              <div className="h-4 w-1/3 rounded bg-gray-200" />
-              <div className="h-28 rounded-lg bg-gray-100" />
-              <div className="flex justify-end gap-3">
-                <div className="h-10 w-24 rounded-lg bg-gray-100" />
-                <div className="h-10 w-28 rounded-lg bg-gray-200" />
-              </div>
-            </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse space-y-4">
+            <div className="h-4 w-1/3 rounded bg-gray-200" />
+            <div className="h-11 rounded-lg bg-gray-100" />
+            <div className="h-4 w-1/3 rounded bg-gray-200" />
+            <div className="h-28 rounded-lg bg-gray-100" />
           </div>
         )}
 
-        {/* Fetch error */}
         {isError && !isLoading && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
             <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p>Failed to load course: {getErrorMessage(fetchError)}</p>
+            Failed to load course: {getErrorMessage(fetchError)}
           </div>
         )}
 
-        {/* Form card */}
         {!isLoading && !isError && course && (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <CourseForm
@@ -97,7 +76,6 @@ export function EditCoursePage() {
           </div>
         )}
       </div>
-
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </AppLayout>
   );

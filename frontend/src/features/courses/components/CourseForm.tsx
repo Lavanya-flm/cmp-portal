@@ -10,7 +10,6 @@ import { getErrorMessage } from '../../../utils/format';
 import type { Course } from '../../../types';
 
 interface CourseFormProps {
-  /** Pre-fill for edit mode */
   defaultValues?: Partial<Course>;
   isSubmitting: boolean;
   submitError: unknown;
@@ -40,25 +39,19 @@ export function CourseForm({
     },
   });
 
-  // Re-populate form when defaultValues change (edit mode navigation)
   useEffect(() => {
-    if (defaultValues) {
-      reset({
-        name: defaultValues.name ?? '',
-        description: defaultValues.description ?? '',
-      });
-    }
+    if (defaultValues) reset({ name: defaultValues.name ?? '', description: defaultValues.description ?? '' });
   }, [defaultValues, reset]);
 
   const serverError = submitError ? getErrorMessage(submitError) : null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-6">
       {serverError && <ErrorBanner message={serverError} />}
 
       <Input
         label="Course Name"
-        placeholder="e.g. Data Analytics - Apr 2026"
+        placeholder="Course Name"
         error={errors.name?.message}
         autoFocus
         {...register('name')}
@@ -66,14 +59,14 @@ export function CourseForm({
 
       <Textarea
         label="Description"
-        placeholder="Describe what students will learn…"
+        placeholder="Describe what students will learn"
         rows={5}
         error={errors.description?.message}
         hint="Optional — displayed under the course name on cards."
         {...register('description')}
       />
 
-      <div className="flex items-center justify-end gap-3 pt-2">
+      <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
         <Button type="button" variant="secondary" size="md" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>

@@ -22,6 +22,7 @@ export const ROUTES = {
   USERS: '/users',
   USER_DETAIL: '/users/:id',
   USER_CREATE: '/users/new',
+  USER_EDIT:   '/users/:id/edit',
 
   // Profile
   PROFILE: '/profile',
@@ -36,6 +37,7 @@ export const buildRoute = {
   batchCreate:  (courseId: string) => `/courses/${courseId}/batches/new`,
   batchEdit:    (courseId: string, batchId: string) => `/courses/${courseId}/batches/${batchId}/edit`,
   userDetail:   (id: string) => `/users/${id}`,
+  userEdit:     (id: string) => `/users/${id}/edit`,
 };
 
 // ─── API endpoint paths (relative to VITE_API_BASE_URL) ──────────────────────
