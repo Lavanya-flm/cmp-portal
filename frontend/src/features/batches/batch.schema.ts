@@ -8,12 +8,30 @@ const urlOrEmpty = z
     message: 'Please enter a valid URL (starting with https://)',
   });
 
+// ─── Reusable phone validation ───────────────────────────────────────────────
+// Accepts empty/undefined (field is optional) OR exactly 10 digits starting 6-9.
+
+const phoneOrEmpty = z
+  .string()
+  .optional()
+  .or(z.literal(''))
+  .refine(
+    (v) => !v || /^[6-9]\d{9}$/.test(v),
+    (v) => ({
+      message: !v
+        ? ''
+        : v.length !== 10
+          ? 'Phone number must be exactly 10 digits'
+          : 'Phone number must start with 6, 7, 8, or 9',
+    }),
+  );
+
 // ─── Trainer sub-schema ───────────────────────────────────────────────────────
 
 const trainerSchema = z.object({
   name:           z.string().min(1, 'Trainer name is required').max(100),
   email:          z.string().min(1, 'Trainer email is required').email('Enter a valid email address'),
-  phone:          z.string().max(20).optional().or(z.literal('')),
+  phone:          phoneOrEmpty,
   experience:     z.coerce.number({ invalid_type_error: 'Must be a number' }).int().min(0).max(60).optional().nullable(),
   currentCompany: z.string().max(150).optional().or(z.literal('')),
 });

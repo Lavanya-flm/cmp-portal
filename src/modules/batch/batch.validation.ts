@@ -2,6 +2,15 @@ import Joi from 'joi';
 
 // ─── Reusable sub-schemas ─────────────────────────────────────────────────────
 
+const phoneSchema = Joi.string()
+  .trim()
+  .pattern(/^[6-9]\d{9}$/)
+  .optional()
+  .allow('', null)
+  .messages({
+    'string.pattern.base': 'Phone number must be exactly 10 digits and start with 6, 7, 8, or 9',
+  });
+
 const trainerCreateSchema = Joi.object({
   name: Joi.string().trim().min(2).max(100).required().messages({
     'string.empty': 'Trainer name is required',
@@ -11,7 +20,7 @@ const trainerCreateSchema = Joi.object({
     'string.email': 'Trainer email must be a valid email address',
     'any.required': 'Trainer email is required',
   }),
-  phone: Joi.string().trim().max(20).optional().allow('', null),
+  phone: phoneSchema,
   experience: Joi.number().integer().min(0).max(60).optional().allow(null).messages({
     'number.min': 'Experience must be 0 or more years',
     'number.max': 'Experience must be 60 years or less',
@@ -20,10 +29,10 @@ const trainerCreateSchema = Joi.object({
 });
 
 const trainerUpdateSchema = Joi.object({
-  name: Joi.string().trim().min(2).max(100).optional(),
+  name:  Joi.string().trim().min(2).max(100).optional(),
   email: Joi.string().email({ tlds: { allow: false } }).lowercase().trim().optional(),
-  phone: Joi.string().trim().max(20).optional().allow('', null),
-  experience: Joi.number().integer().min(0).max(60).optional().allow(null),
+  phone: phoneSchema,
+  experience:     Joi.number().integer().min(0).max(60).optional().allow(null),
   currentCompany: Joi.string().trim().max(150).optional().allow('', null),
 });
 
