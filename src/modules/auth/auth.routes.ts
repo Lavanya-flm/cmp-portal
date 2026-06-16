@@ -3,7 +3,13 @@ import { authController } from './auth.controller';
 import { validate } from '../../core/middleware/validate.middleware';
 import { authenticate } from '../../core/middleware/auth.middleware';
 import { authRateLimiter } from '../../core/middleware/rateLimiter.middleware';
-import { loginSchema, refreshTokenSchema } from './auth.validation';
+import {
+  loginSchema,
+  refreshTokenSchema,
+  registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from './auth.validation';
 
 const router = Router();
 
@@ -215,6 +221,98 @@ router.post('/login', authRateLimiter, validate(loginSchema), authController.log
  *         $ref: '#/components/responses/ValidationError'
  */
 router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), authController.refresh);
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user account
+ *     description: |
+ *       Creates a new USER-role account. Does **not** auto-login — call
+ *       `POST /auth/login` after registration to obtain tokens.
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, email, password]
+ *             properties:
+ *               firstName: { type: string, example: John }
+ *               lastName:  { type: string, example: Doe }
+ *               email:     { type: string, format: email, example: john@example.com }
+ *               password:  { type: string, format: password, example: "StrongPass@123" }
+ *     responses:
+ *       201:
+ *         description: Account created — login to obtain tokens
+ *       409:
+ *         description: Email already registered
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ *       429:
+ *         description: Too many requests
+ */
+router.post('/register', authRateLimiter, validate(registerSchema), authController.register);
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset token
+ *     description: |
+ *       Generates a PASSWORD_RESET token (valid 30 min).
+ *       Always returns success to prevent email enumeration.
+ *       **Development mode:** the token is returned in `data.resetToken`.
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email, example: john@example.com }
+ *     responses:
+ *       200:
+ *         description: Success (token in data.resetToken in dev mode)
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+router.post('/forgot-password', authRateLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password using a valid reset token
+ *     description: |
+ *       Verifies the PASSWORD_RESET token, updates the user's password,
+ *       and invalidates all existing sessions for security.
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, newPassword]
+ *             properties:
+ *               token:       { type: string, example: "abc123..." }
+ *               newPassword: { type: string, format: password, example: "NewPass@456" }
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       401:
+ *         description: Token invalid or expired
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+router.post('/reset-password', authRateLimiter, validate(resetPasswordSchema), authController.resetPassword);
 
 // ─── Protected routes (valid access token required) ───────────────────────────
 

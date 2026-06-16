@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { useLogout } from '../hooks/useAuth';
-import { useHasRole, useIsSuperAdmin } from '../hooks/usePermission';
 import { ROUTES } from '../utils/constants';
 import { formatRole, fullName } from '../utils/format';
 import type { Role } from '../types';
@@ -63,6 +62,13 @@ function RoleBadge({ role }: { role: Role }) {
       {formatRole(role)}
     </span>
   );
+}
+
+/** Reads role directly from the store — avoids adding an extra hook call in AppLayout */
+function UserRoleBadge() {
+  const user = useAuthStore((s) => s.user);
+  if (!user) return null;
+  return <RoleBadge role={user.role} />;
 }
 
 // ─── Sidebar nav link ─────────────────────────────────────────────────────────
@@ -218,9 +224,6 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const user = useAuthStore((s) => s.user);
-  const isSuperAdmin = useIsSuperAdmin();
-  const isAdmin = useHasRole('SUPER_ADMIN', 'SUB_ADMIN');
 
   return (
     <div className="flex h-screen bg-[#FFF9F1]">
@@ -262,14 +265,12 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
             <span className="text-sm font-bold text-gray-900">CMP Portal</span>
           </div>
-          {/* Role info visible on mobile */}
-          {user && <RoleBadge role={user.role} />}
+          {/* Role badge — read directly from store, no extra hook needed */}
+          <UserRoleBadge />
         </header>
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          {/* Suppress unused variable warnings — these are available for child pages */}
-          <div data-super-admin={isSuperAdmin} data-admin={isAdmin} className="hidden" />
           {children}
         </main>
       </div>

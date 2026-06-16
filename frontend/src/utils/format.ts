@@ -37,21 +37,24 @@ export function fullName(firstName: string, lastName: string): string {
 // ─── Technical → human message mapping ───────────────────────────────────────
 
 const TECHNICAL_PATTERNS: Array<[RegExp, string | ((m: RegExpMatchArray) => string)]> = [
+  // Password reset token expired / invalid — must come before generic 401 handling
+  [/password reset token is invalid or has expired/i, 'This reset link has expired or is invalid. Please request a new one.'],
+  [/reset token/i,           'This reset link has expired or is invalid. Please request a new one.'],
   // URI / URL
-  [/must be a valid uri/i,             'Please enter a valid URL (starting with https://)'],
-  [/must be a valid url/i,             'Please enter a valid URL'],
+  [/must be a valid uri/i,   'Please enter a valid URL (starting with https://)'],
+  [/must be a valid url/i,   'Please enter a valid URL'],
   // Email
-  [/must be a valid email/i,           'Please enter a valid email address'],
+  [/must be a valid email/i, 'Please enter a valid email address'],
   // Required
-  [/is required/i,                     'This field is required'],
-  [/must not be empty/i,               'This field is required'],
-  [/is not allowed to be empty/i,      'This field is required'],
+  [/is required/i,           'This field is required'],
+  [/must not be empty/i,     'This field is required'],
+  [/is not allowed to be empty/i, 'This field is required'],
   // Length — min
   [/must be at least (\d+) characters/i,  (m) => `Must be at least ${m[1]} characters`],
   [/length must be at least (\d+)/i,      (m) => `Must be at least ${m[1]} characters`],
   [/must contain at least (\d+)/i,        (m) => `Must contain at least ${m[1]} characters`],
   // Length — max
-  [/must not exceed (\d+) characters/i,  (m) => `Must not exceed ${m[1]} characters`],
+  [/must not exceed (\d+) characters/i,   (m) => `Must not exceed ${m[1]} characters`],
   [/length must be less than or equal to (\d+)/i, (m) => `Must not exceed ${m[1]} characters`],
   // Number range
   [/must be greater than or equal to (\d+)/i, (m) => `Must be at least ${m[1]}`],
@@ -59,19 +62,19 @@ const TECHNICAL_PATTERNS: Array<[RegExp, string | ((m: RegExpMatchArray) => stri
   [/must be greater than (\d+)/i,             (m) => `Must be greater than ${m[1]}`],
   [/must be less than (\d+)/i,                (m) => `Must be less than ${m[1]}`],
   // Type
-  [/must be a number/i,                'Please enter a valid number'],
-  [/must be a string/i,                'Please enter a valid value'],
-  [/must be a boolean/i,               'Please select a valid option'],
+  [/must be a number/i,   'Please enter a valid number'],
+  [/must be a string/i,   'Please enter a valid value'],
+  [/must be a boolean/i,  'Please select a valid option'],
   // Date
-  [/must be a valid iso date/i,        'Please enter a valid date (YYYY-MM-DD)'],
+  [/must be a valid iso date/i, 'Please enter a valid date (YYYY-MM-DD)'],
   // Enum / allowed values
-  [/must be one of/i,                  'Please select a valid option'],
-  // Duplicate
-  [/already exists/i,                  (m) => m[0]],   // keep as-is — it's already friendly
+  [/must be one of/i,     'Please select a valid option'],
+  // Duplicate — keep backend message as-is (already user-friendly)
+  [/already exists/i,     (m) => m[0]],
   // Generic validation
-  [/validation failed/i,               'Please correct the highlighted fields.'],
-  [/unprocessable entity/i,            'Please correct the highlighted fields.'],
-  [/invalid data/i,                    'Please correct the highlighted fields.'],
+  [/validation failed/i,       'Please correct the highlighted fields.'],
+  [/unprocessable entity/i,    'Please correct the highlighted fields.'],
+  [/invalid data/i,            'Please correct the highlighted fields.'],
 ];
 
 function humaniseMessage(raw: string): string {
@@ -148,16 +151,20 @@ export function getErrorMessage(error: unknown): string {
     }
 
     // 401 / 403
-    if (status === 401) return 'Invalid email or password. Please try again.';
+    if (status === 401) {
+      // Prefer backend message for context-specific 401s (e.g. expired reset token)
+      if (typeof data?.message === 'string') return humaniseMessage(data.message);
+      return 'Invalid email or password. Please try again.';
+    }
     if (status === 403) return 'You do not have permission to perform this action.';
 
     // 404
     if (status === 404) {
       if (typeof data?.message === 'string') return data.message;
-      return 'The requested resource was not found.';
+      return 'The requested resource could not be found.';
     }
 
-    // 409 Conflict (duplicate name, etc.)
+    // 409 Conflict
     if (status === 409) {
       if (typeof data?.message === 'string') return data.message;
       return 'This record already exists. Please use a different value.';

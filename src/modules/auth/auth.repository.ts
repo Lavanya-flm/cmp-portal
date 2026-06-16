@@ -151,6 +151,55 @@ export class AuthRepository {
       data: { isActive: false, revokedAt: new Date() },
     });
   }
+
+  // ─── Password reset token CRUD ────────────────────────────────────────────
+
+  /**
+   * Create a PASSWORD_RESET token for a user.
+   */
+  async createPasswordResetToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<Token> {
+    return prisma.token.create({
+      data: {
+        userId,
+        type: TokenType.PASSWORD_RESET,
+        token,
+        expiresAt,
+      },
+    });
+  }
+
+  /**
+   * Find a valid (unused, unexpired) PASSWORD_RESET token.
+   */
+  async findPasswordResetToken(token: string): Promise<Token | null> {
+    return prisma.token.findFirst({
+      where: {
+        token,
+        type: TokenType.PASSWORD_RESET,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    });
+  }
+
+  /**
+   * Invalidate all existing PASSWORD_RESET tokens for a user.
+   * Called before issuing a new one so only the latest token is valid.
+   */
+  async revokeAllPasswordResetTokens(userId: string): Promise<void> {
+    await prisma.token.updateMany({
+      where: {
+        userId,
+        type: TokenType.PASSWORD_RESET,
+        usedAt: null,
+      },
+      data: { usedAt: new Date() },
+    });
+  }
 }
 
 export const authRepository = new AuthRepository();

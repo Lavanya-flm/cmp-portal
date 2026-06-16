@@ -1,16 +1,21 @@
 import ms from 'ms';
+import crypto from 'crypto';
 import { User } from '@prisma/client';
 import { authRepository } from './auth.repository';
+import { userRepository } from '../user/user.repository';
 import { generateTokenPair, verifyRefreshToken } from '../../core/utils/jwt.util';
-import { comparePassword } from '../../core/utils/password.util';
+import { comparePassword, hashPassword } from '../../core/utils/password.util';
 import { logger } from '../../core/logger';
-import { UnauthorizedError } from '../../core/errors/AppError';
+import { UnauthorizedError, ConflictError } from '../../core/errors/AppError';
 import { ErrorCode } from '../../core/errors/AppError';
 import { Role } from '../../core/types';
 import { env } from '../../config/env';
 import {
   LoginDto,
   RefreshTokenDto,
+  RegisterDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
   LoginResponse,
   RefreshResponse,
   AuthUserResponse,
@@ -181,6 +186,119 @@ export class AuthService {
       authRepository.revokeAllRefreshTokens(userId),
     ]);
     logger.info('User logged out from all devices', { userId });
+  }
+
+  // ─── Registration ──────────────────────────────────────────────────────────
+
+  /**
+   * Register a new user with role USER.
+   * Does not auto-login — the user must call /auth/login after registering.
+   * Returns the created user's public profile (no tokens).
+   */
+  async register(dto: RegisterDto): Promise<AuthUserResponse> {
+    // 1. Duplicate email check
+    const existing = await userRepository.findByEmail(dto.email);
+    if (existing) {
+      throw new ConflictError('An account with this email address already exists');
+    }
+
+    // 2. Hash password
+    const passwordHash = await hashPassword(dto.password);
+
+    // 3. Create user with role USER
+    const user = await userRepository.create({
+      email: dto.email.toLowerCase().trim(),
+      passwordHash,
+      firstName: dto.firstName.trim(),
+      lastName:  dto.lastName.trim(),
+      role: 'USER',
+    });
+
+    logger.info('New user registered', { userId: user.id, email: user.email });
+
+    return {
+      id:              user.id,
+      email:           user.email,
+      firstName:       user.firstName,
+      lastName:        user.lastName,
+      role:            user.role as unknown as Role,
+      isActive:        user.isActive,
+      isEmailVerified: user.isEmailVerified,
+      lastLoginAt:     user.lastLoginAt as Date | null,
+    };
+  }
+
+  // ─── Forgot password ───────────────────────────────────────────────────────
+
+  /**
+   * Generate and store a PASSWORD_RESET token.
+   * In development mode the token is returned in the response so it can be
+   * tested without an email provider.
+   * Always returns a success message even when the email is not found —
+   * this prevents user enumeration.
+   */
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ resetToken: string | null }> {
+    const PASSWORD_RESET_EXPIRES_MINS = 30;
+
+    // Look up user — deliberately not throwing if missing
+    const userRecord = await authRepository.findUserByEmail(dto.email);
+
+    if (!userRecord) {
+      // Silent success — do not reveal whether the email exists
+      logger.info('Forgot password request for unknown email', { email: dto.email });
+      return { resetToken: null };
+    }
+
+    // Revoke any existing unused PASSWORD_RESET tokens for this user
+    await authRepository.revokeAllPasswordResetTokens(userRecord.id);
+
+    // Generate a cryptographically secure token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt  = new Date(Date.now() + PASSWORD_RESET_EXPIRES_MINS * 60 * 1000);
+
+    await authRepository.createPasswordResetToken(userRecord.id, resetToken, expiresAt);
+
+    logger.info('Password reset token generated', {
+      userId: userRecord.id,
+      expiresAt,
+      // Log token to console in development so it can be tested without email
+      ...(env.nodeEnv === 'development' && { resetToken }),
+    });
+
+    // In development — return token directly in response
+    // In production — return null (token will be sent via email)
+    return { resetToken: env.nodeEnv === 'development' ? resetToken : null };
+  }
+
+  // ─── Reset password ────────────────────────────────────────────────────────
+
+  /**
+   * Verify a PASSWORD_RESET token and update the user's password.
+   * Marks the token as used and revokes all existing sessions for security.
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    // 1. Validate the token
+    const tokenRecord = await authRepository.findPasswordResetToken(dto.token);
+    if (!tokenRecord) {
+      throw new UnauthorizedError(
+        'Password reset token is invalid or has expired',
+        ErrorCode.UNAUTHORIZED,
+      );
+    }
+
+    // 2. Hash the new password
+    const passwordHash = await hashPassword(dto.newPassword);
+
+    // 3. Update password + mark token used + revoke all sessions (parallel)
+    await Promise.all([
+      userRepository.updatePassword(tokenRecord.userId, passwordHash),
+      authRepository.markTokenUsed(tokenRecord.id),
+      authRepository.revokeAllPasswordResetTokens(tokenRecord.userId),
+      authRepository.revokeAllSessions(tokenRecord.userId),
+      authRepository.revokeAllRefreshTokens(tokenRecord.userId),
+    ]);
+
+    logger.info('Password reset successful', { userId: tokenRecord.userId });
   }
 }
 

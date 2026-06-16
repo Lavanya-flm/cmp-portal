@@ -2,35 +2,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { isAxiosError } from 'axios';
 import { loginSchema, LoginFormValues } from './auth.schema';
 import { useLogin } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { PasswordInput } from '../../components/auth/PasswordInput';
 import { ErrorBanner } from '../../components/auth/ErrorBanner';
+import { getErrorMessage } from '../../utils/format';
 import { ROUTES } from '../../utils/constants';
-
-// ─── Map raw error → user-friendly message ────────────────────────────────────
-function getLoginErrorMessage(error: unknown): string {
-  if (!error) return '';
-
-  if (isAxiosError(error)) {
-    // Network error / CORS / server unreachable
-    if (!error.response) {
-      return 'Unable to connect to the server. Please check your connection and try again.';
-    }
-    const status = error.response.status;
-    if (status === 401 || status === 403) {
-      return 'Invalid email or password. Please try again.';
-    }
-    if (status >= 500) {
-      return 'Something went wrong on our end. Please try again later.';
-    }
-  }
-
-  return 'Invalid email or password. Please try again.';
-}
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -46,7 +25,7 @@ export function LoginForm() {
     login({ email: data.email, password: data.password, rememberMe: data.rememberMe });
   };
 
-  const serverError = error ? getLoginErrorMessage(error) : null;
+  const serverError = error ? getErrorMessage(error) : null;
 
   return (
     <div className="rounded-2xl bg-white px-8 py-9 shadow-sm ring-1 ring-gray-200/80">
