@@ -8,6 +8,9 @@ import { ROUTES } from '../utils/constants';
 // ─── Lazy-loaded pages ────────────────────────────────────────────────────────
 
 const LoginPage        = lazy(() => import('../pages/LoginPage').then((m) => ({ default: m.LoginPage })));
+const RegisterPage     = lazy(() => import('../pages/RegisterPage').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage  = lazy(() => import('../pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
 const DashboardPage    = lazy(() => import('../pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const CoursesPage      = lazy(() => import('../pages/CoursesPage').then((m) => ({ default: m.CoursesPage })));
 const CourseDetailPage = lazy(() => import('../pages/CourseDetailPage').then((m) => ({ default: m.CourseDetailPage })));
@@ -93,6 +96,19 @@ const router = createBrowserRouter([
   {
     path: ROUTES.LOGIN,
     element: <GuestRoute><Page component={LoginPage} /></GuestRoute>,
+  },
+  {
+    path: ROUTES.REGISTER,
+    element: <GuestRoute><Page component={RegisterPage} /></GuestRoute>,
+  },
+  {
+    path: ROUTES.FORGOT_PASSWORD,
+    element: <GuestRoute><Page component={ForgotPasswordPage} /></GuestRoute>,
+  },
+  {
+    // Reset password is accessible even when authenticated (edge case: logged in but needs reset)
+    path: ROUTES.RESET_PASSWORD,
+    element: <Page component={ResetPasswordPage} />,
   },
 
   // ── Dashboard ─────────────────────────────────────────────────────────────

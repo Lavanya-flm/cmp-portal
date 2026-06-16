@@ -16,7 +16,12 @@ export function CreateCoursePage() {
   const handleSubmit = (data: CourseFormValues) => {
     reset();
     createCourse(
-      { name: data.name, description: data.description || undefined },
+      {
+        name:         data.name,
+        description:  data.description  || undefined,
+        bannerImage:  data.bannerImage  ?? null,
+        courseOffers: data.courseOffers || undefined,
+      },
       {
         onSuccess: () => {
           addToast('Course created successfully!', 'success');

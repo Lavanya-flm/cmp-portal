@@ -3,9 +3,12 @@ import { BookOpen } from 'lucide-react';
 interface CourseImageProps {
   courseName: string;
   className?: string;
+  /** Optional uploaded banner — if provided, renders instead of the gradient */
+  imageUrl?: string | null;
 }
 
-// Deterministic gradient from course name
+// ─── Deterministic gradient fallback ─────────────────────────────────────────
+
 function getCourseGradient(name: string): string {
   const gradients = [
     'from-violet-600 via-purple-600 to-indigo-700',
@@ -32,33 +35,33 @@ function getCourseInitials(name: string): string {
     .join('');
 }
 
-export function CourseImage({ courseName, className = '' }: CourseImageProps) {
+export function CourseImage({ courseName, className = '', imageUrl }: CourseImageProps) {
+  // ── Uploaded image ────────────────────────────────────────────────────────
+  if (imageUrl) {
+    return (
+      <div className={`relative overflow-hidden bg-gray-100 ${className}`}>
+        <img
+          src={imageUrl}
+          alt={courseName}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // ── Generated gradient fallback ───────────────────────────────────────────
   const gradient = getCourseGradient(courseName);
-  const initials = getCourseInitials(courseName);
+  const initials  = getCourseInitials(courseName);
 
   return (
-    <div
-      className={`relative overflow-hidden bg-gradient-to-br ${gradient} ${className}`}
-      aria-hidden="true"
-    >
-      {/* Decorative circles */}
+    <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} ${className}`} aria-hidden="true">
       <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
       <div className="absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-white/10" />
-
-      {/* Centered icon + initials */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
           <BookOpen size={22} className="text-white" />
         </div>
         <span className="text-xl font-bold tracking-wide text-white/90">{initials}</span>
-      </div>
-
-      {/* Live badge */}
-      <div className="absolute left-3 top-3">
-        <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white shadow">
-          <span className="h-1.5 w-1.5 rounded-full bg-white" />
-          Live
-        </span>
       </div>
     </div>
   );

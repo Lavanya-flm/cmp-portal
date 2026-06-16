@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronRight, Pencil, Trash2, Plus, AlertCircle, RefreshCw,
-  LayoutGrid, Calendar, Clock, TrendingUp,
+  LayoutGrid, Activity, Clock, CheckCircle2, CheckCircle,
 } from 'lucide-react';
 import { AppLayout } from '../layouts/AppLayout';
 import { useCourse, useDeleteCourse } from '../hooks/useCourses';
@@ -10,7 +10,6 @@ import { useBatches, useDeleteBatch } from '../hooks/useBatches';
 import { useIsSuperAdmin, useIsAdmin } from '../hooks/usePermission';
 import { useToast } from '../hooks/useToast';
 import { CourseImage } from '../features/courses/components/CourseImage';
-import { CourseStatusBadge, deriveCourseStatus } from '../features/courses/components/CourseStatusBadge';
 import { DeleteCourseDialog } from '../features/courses/components/DeleteCourseDialog';
 import { BatchGrid } from '../features/batches/components/BatchGrid';
 import { BatchLoadingState } from '../features/batches/components/BatchLoadingState';
@@ -19,11 +18,12 @@ import { DeleteBatchDialog } from '../features/batches/components/DeleteBatchDia
 import { ToastContainer } from '../components/ui/Toast';
 import { Button } from '../components/ui/Button';
 import { buildRoute, ROUTES } from '../utils/constants';
-import { formatDate, getErrorMessage } from '../utils/format';
-import type { Batch, Course } from '../types';
+import { getErrorMessage } from '../utils/format';
+import type { Batch } from '../types';
 
 type Tab = 'overview' | 'batches';
 
+// ── Tab button ────────────────────────────────────────────────────────────────
 function TabBtn({ active, onClick, children }: {
   active: boolean; onClick: () => void; children: React.ReactNode;
 }) {
@@ -33,7 +33,9 @@ function TabBtn({ active, onClick, children }: {
       onClick={onClick}
       className={[
         'pb-3 px-1 mr-8 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap',
-        active ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500 hover:text-gray-800',
+        active
+          ? 'border-amber-500 text-amber-600'
+          : 'border-transparent text-gray-500 hover:text-gray-800',
       ].join(' ')}
     >
       {children}
@@ -41,22 +43,26 @@ function TabBtn({ active, onClick, children }: {
   );
 }
 
-function StatCard({ icon, label, value, accent = false }: {
+// ── Top stat card — medium size, sits below the page header ─────────────────
+function TopStatCard({
+  icon, label, value, accent = false,
+}: {
   icon: React.ReactNode; label: string; value: string | number; accent?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${accent ? 'bg-amber-50 text-amber-500' : 'bg-gray-50 text-gray-400'}`}>
+    <div className="flex items-center gap-3.5 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accent ? 'bg-amber-50 text-amber-500' : 'bg-gray-50 text-gray-400'}`}>
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</p>
-        <p className="truncate text-sm font-semibold text-gray-900">{value}</p>
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{label}</p>
+        <p className="mt-0.5 text-2xl font-bold leading-none text-gray-900">{value}</p>
       </div>
     </div>
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export function CourseDetailPage() {
   const { id: courseId = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -67,25 +73,32 @@ export function CourseDetailPage() {
   const isSuperAdmin = useIsSuperAdmin();
   const isAdmin = useIsAdmin();
 
-  const { data: course, isLoading: courseLoading, isError: courseError, error: courseErr, refetch } = useCourse(courseId);
+  const {
+    data: course,
+    isLoading: courseLoading,
+    isError: courseError,
+    error: courseErr,
+    refetch,
+  } = useCourse(courseId);
   const { mutate: deleteCourse, isPending: isDeletingCourse } = useDeleteCourse();
   const { data: batchData, isLoading: batchLoading } = useBatches(courseId, { limit: 100 });
   const batches = batchData?.data ?? [];
   const { mutate: deleteBatch, isPending: isDeletingBatch } = useDeleteBatch(courseId);
   const { toasts, addToast, removeToast } = useToast();
 
-  const priceMin = batches.length ? Math.min(...batches.map((b) => b.price)) : null;
-  const priceMax = batches.length ? Math.max(...batches.map((b) => b.price)) : null;
-  const priceRange = priceMin != null && priceMax != null
-    ? priceMin === priceMax
-      ? `₹${priceMin.toLocaleString('en-IN')}`
-      : `₹${priceMin.toLocaleString('en-IN')} – ₹${priceMax.toLocaleString('en-IN')}`
-    : '—';
+  // ── Batch stats — driven by stored batch.status ─────────────────────────────
+  const liveBatches      = batches.filter((b) => b.status === 'Live').length;
+  const upcomingBatches  = batches.filter((b) => b.status === 'Upcoming').length;
+  const completedBatches = batches.filter((b) => b.status === 'Completed').length;
+  const totalBatches     = batchData?.meta.total ?? '—';
 
   const handleDeleteCourse = () => {
     if (!course) return;
     deleteCourse(course.id, {
-      onSuccess: () => { addToast(`"${course.name}" deleted.`, 'success'); setTimeout(() => navigate(ROUTES.COURSES), 600); },
+      onSuccess: () => {
+        addToast(`"${course.name}" deleted.`, 'success');
+        setTimeout(() => navigate(ROUTES.COURSES), 600);
+      },
       onError: (err) => { addToast(getErrorMessage(err), 'error'); setShowDeleteCourse(false); },
     });
   };
@@ -98,23 +111,42 @@ export function CourseDetailPage() {
     });
   };
 
-  const status = course ? deriveCourseStatus(course as Course, batches) : 'draft';
-
   return (
     <AppLayout>
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
 
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-1.5 text-xs text-gray-500">
-          <button type="button" onClick={() => navigate(ROUTES.COURSES)} className="hover:text-amber-600 transition-colors font-medium">Courses</button>
-          {course && (<><ChevronRight size={12} className="text-gray-300" /><span className="font-medium text-gray-700">{course.name}</span></>)}
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.COURSES)}
+            className="font-medium hover:text-amber-600 transition-colors"
+          >
+            Courses
+          </button>
+          {course && (
+            <>
+              <ChevronRight size={12} className="text-gray-300" />
+              <span className="font-medium text-gray-700">{course.name}</span>
+            </>
+          )}
         </nav>
 
-        {/* Loading */}
+        {/* Loading skeleton */}
         {courseLoading && (
-          <div className="animate-pulse space-y-4">
-            <div className="h-7 w-1/3 rounded bg-gray-200" />
-            <div className="grid grid-cols-4 gap-3">{[...Array(4)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-gray-100" />)}</div>
+          <div className="animate-pulse space-y-5">
+            <div className="h-8 w-1/3 rounded-lg bg-gray-200" />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-28 rounded-2xl bg-gray-100" />)}
+            </div>
+            <div className="h-10 w-40 rounded-lg bg-gray-100" />
+            <div className="flex gap-5">
+              <div className="h-72 w-[42%] rounded-2xl bg-gray-200" />
+              <div className="flex-1 space-y-4">
+                <div className="h-32 rounded-xl bg-gray-100" />
+                <div className="h-40 rounded-xl bg-gray-100" />
+              </div>
+            </div>
           </div>
         )}
 
@@ -122,24 +154,28 @@ export function CourseDetailPage() {
         {courseError && !courseLoading && (
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
             <AlertCircle size={28} className="text-red-400" />
-            <div><p className="font-semibold text-red-700">Failed to load course</p><p className="mt-1 text-sm text-red-500">{getErrorMessage(courseErr)}</p></div>
-            <Button variant="secondary" size="sm" onClick={() => void refetch()}><RefreshCw size={13} /> Try again</Button>
+            <div>
+              <p className="font-semibold text-red-700">Failed to load course</p>
+              <p className="mt-1 text-sm text-red-500">{getErrorMessage(courseErr)}</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+              <RefreshCw size={13} /> Try again
+            </Button>
           </div>
         )}
 
-        {/* Content */}
+        {/* Main content */}
         {!courseLoading && !courseError && course && (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
 
-            {/* Page header */}
+            {/* 1 — Page header: name + description preview + actions */}
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-2xl font-bold tracking-tight text-gray-900">{course.name}</h1>
-                  <CourseStatusBadge status={status} />
-                </div>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">{course.name}</h1>
                 {course.description && (
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500 leading-relaxed line-clamp-2">{course.description}</p>
+                  <p className="mt-1.5 max-w-2xl text-sm text-gray-500 leading-relaxed line-clamp-2">
+                    {course.description}
+                  </p>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -156,77 +192,147 @@ export function CourseDetailPage() {
               </div>
             </div>
 
-            {/* Stats bar */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <StatCard icon={<LayoutGrid size={15} />} label="Total Batches" value={batchData?.meta.total ?? '—'} accent />
-              <StatCard icon={<TrendingUp size={15} />} label="Price Range"   value={priceRange} />
-              <StatCard icon={<Calendar size={15} />}   label="Created On"    value={formatDate(course.createdAt)} />
-              <StatCard icon={<Clock size={15} />}      label="Last Updated"  value={formatDate(course.updatedAt)} />
-              {/* Status card */}
-              <div className="col-span-2 sm:col-span-1 flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-400">
-                  <span className="text-xs">●</span>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Status</p>
-                  <CourseStatusBadge status={status} />
-                </div>
-              </div>
+            {/* 2 — Top statistics bar: 4 large prominent cards */}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <TopStatCard icon={<LayoutGrid size={18} />}  label="Total Batches"     value={totalBatches}     accent />
+              <TopStatCard icon={<Activity size={18} />}    label="Live Batches"      value={liveBatches} />
+              <TopStatCard icon={<Clock size={18} />}       label="Upcoming Batches"  value={upcomingBatches} />
+              <TopStatCard icon={<CheckCircle size={18} />} label="Completed Batches" value={completedBatches} />
             </div>
 
-            {/* Tabs */}
+            {/* 3 — Tabs */}
             <div className="border-b border-gray-200">
               <div className="flex">
-                <TabBtn active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>Overview</TabBtn>
+                <TabBtn active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
+                  Overview
+                </TabBtn>
                 <TabBtn active={activeTab === 'batches'} onClick={() => setActiveTab('batches')}>
                   Batches
                   {batches.length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{batches.length}</span>
+                    <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+                      {batches.length}
+                    </span>
                   )}
                 </TabBtn>
               </div>
             </div>
 
-            {/* Overview tab */}
+            {/* 4 — Overview tab */}
             {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                <div className="overflow-hidden rounded-2xl shadow-sm lg:col-span-1">
-                  <CourseImage courseName={course.name} className="h-52 w-full" />
-                </div>
-                <div className="flex flex-col gap-0 lg:col-span-2 rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-                  <div className="border-b border-gray-50 px-5 py-3">
-                    <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</h2>
+              <div className="flex flex-col gap-6">
+
+                {/* Two-column: Banner LEFT (42%) | Description + Offers RIGHT (58%) */}
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
+
+                  {/* LEFT — Banner fills the full height of the right content */}
+                  <div className="w-full shrink-0 lg:w-[42%]">
+                    <div className="h-full min-h-[280px] overflow-hidden rounded-2xl shadow-sm">
+                      <CourseImage
+                        courseName={course.name}
+                        imageUrl={course.bannerImage}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                   </div>
-                  <div className="p-5 flex-1">
-                    {course.description ? (
-                      <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">{course.description}</p>
-                    ) : (
-                      <p className="text-sm italic text-gray-400">No description provided.</p>
-                    )}
+
+                  {/* RIGHT — Description card + Course Offers card */}
+                  <div className="flex flex-1 flex-col gap-4">
+
+                    {/* Description */}
+                    <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                      <div className="border-b border-gray-50 px-5 py-3">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</h2>
+                      </div>
+                      <div className="p-5">
+                        {course.description ? (
+                          <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
+                            {course.description}
+                          </p>
+                        ) : (
+                          <p className="text-sm italic text-gray-400">No description provided.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Course Offers — hidden when empty, column-fill layout */}
+                    {course.courseOffers &&
+                      course.courseOffers.split('\n').some((s) => s.trim()) && (() => {
+                        const offers = course.courseOffers!
+                          .split('\n')
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const mid   = Math.ceil(offers.length / 2);
+                        const left  = offers.slice(0, mid);
+                        const right = offers.slice(mid);
+                        return (
+                          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                            <div className="border-b border-gray-50 px-5 py-3">
+                              <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                Course Offers
+                              </h2>
+                            </div>
+                            <div className="flex gap-0 px-5 py-2">
+                              {/* Left column */}
+                              <ul className="flex-1">
+                                {left.map((item, i) => (
+                                  <li key={i} className="flex items-center gap-2 py-1.5 text-sm text-gray-700">
+                                    <CheckCircle2 size={13} className="shrink-0 text-amber-500" />
+                                    <span className="leading-snug">{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {/* Right column — only render when there are items */}
+                              {right.length > 0 && (
+                                <ul className="flex-1">
+                                  {right.map((item, i) => (
+                                    <li key={i} className="flex items-center gap-2 py-1.5 text-sm text-gray-700">
+                                      <CheckCircle2 size={13} className="shrink-0 text-amber-500" />
+                                      <span className="leading-snug">{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                   </div>
                 </div>
 
-                {/* Recent batches */}
+                {/* Recent Batches — full width below the two-column block */}
                 {!batchLoading && batches.length > 0 && (
-                  <div className="lg:col-span-3 flex flex-col gap-3">
+                  <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-semibold text-gray-700">Recent Batches</h2>
-                      <button type="button" onClick={() => setActiveTab('batches')} className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('batches')}
+                        className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors"
+                      >
                         View all {batches.length} →
                       </button>
                     </div>
-                    <BatchGrid batches={batches.slice(0, 3)} courseId={courseId} canEdit={isAdmin} canDelete={isSuperAdmin} onDelete={setBatchToDelete} />
+                    <BatchGrid
+                      batches={batches.slice(0, 3)}
+                      courseId={courseId}
+                      canEdit={isAdmin}
+                      canDelete={isSuperAdmin}
+                      onDelete={setBatchToDelete}
+                    />
                   </div>
                 )}
               </div>
             )}
 
-            {/* Batches tab */}
+            {/* 5 — Batches tab */}
             {activeTab === 'batches' && (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-gray-700">
-                    All Batches{batches.length > 0 && <span className="ml-2 text-gray-400 font-normal">({batches.length})</span>}
+                    All Batches
+                    {batches.length > 0 && (
+                      <span className="ml-2 font-normal text-gray-400">({batches.length})</span>
+                    )}
                   </h2>
                   {isAdmin && (
                     <Button variant="primary" size="sm" onClick={() => navigate(buildRoute.batchCreate(courseId))}>
@@ -235,16 +341,39 @@ export function CourseDetailPage() {
                   )}
                 </div>
                 {batchLoading && <BatchLoadingState count={3} />}
-                {!batchLoading && batches.length === 0 && <BatchEmptyState canCreate={isAdmin} onCreateClick={() => navigate(buildRoute.batchCreate(courseId))} />}
-                {!batchLoading && batches.length > 0 && <BatchGrid batches={batches} courseId={courseId} canEdit={isAdmin} canDelete={isSuperAdmin} onDelete={setBatchToDelete} />}
+                {!batchLoading && batches.length === 0 && (
+                  <BatchEmptyState
+                    canCreate={isAdmin}
+                    onCreateClick={() => navigate(buildRoute.batchCreate(courseId))}
+                  />
+                )}
+                {!batchLoading && batches.length > 0 && (
+                  <BatchGrid
+                    batches={batches}
+                    courseId={courseId}
+                    canEdit={isAdmin}
+                    canDelete={isSuperAdmin}
+                    onDelete={setBatchToDelete}
+                  />
+                )}
               </div>
             )}
           </div>
         )}
       </div>
 
-      <DeleteCourseDialog course={showDeleteCourse ? course ?? null : null} loading={isDeletingCourse} onConfirm={handleDeleteCourse} onCancel={() => setShowDeleteCourse(false)} />
-      <DeleteBatchDialog batch={batchToDelete} loading={isDeletingBatch} onConfirm={handleDeleteBatch} onCancel={() => setBatchToDelete(null)} />
+      <DeleteCourseDialog
+        course={showDeleteCourse ? course ?? null : null}
+        loading={isDeletingCourse}
+        onConfirm={handleDeleteCourse}
+        onCancel={() => setShowDeleteCourse(false)}
+      />
+      <DeleteBatchDialog
+        batch={batchToDelete}
+        loading={isDeletingBatch}
+        onConfirm={handleDeleteBatch}
+        onCancel={() => setBatchToDelete(null)}
+      />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </AppLayout>
   );

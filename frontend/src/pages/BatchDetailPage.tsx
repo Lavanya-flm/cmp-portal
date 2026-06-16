@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronRight, AlertCircle, RefreshCw, Pencil, Trash2,
-  Calendar, IndianRupee, Mail, BookOpen, Hash, ExternalLink,
+  Calendar, IndianRupee, Mail, BookOpen, Link2,
 } from 'lucide-react';
 import { AppLayout } from '../layouts/AppLayout';
 import { useBatch, useDeleteBatch } from '../hooks/useBatches';
@@ -25,12 +25,12 @@ function InfoCell({ icon, label, value }: {
 }) {
   return (
     <div className="flex items-start gap-2.5">
-      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-400">
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-400">
         {icon}
       </div>
       <div className="min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</p>
-        <p className="truncate text-sm font-medium text-gray-700">{value || '—'}</p>
+        <p className="text-sm font-medium text-gray-700">{value || '—'}</p>
       </div>
     </div>
   );
@@ -41,10 +41,10 @@ function InfoCell({ icon, label, value }: {
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-      <div className="border-b border-gray-50 px-4 py-3">
+      <div className="border-b border-gray-50 px-5 py-3">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</h3>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -75,10 +75,15 @@ export function BatchDetailPage() {
     });
   };
 
-  // Count set links for sidebar summary
+  // Count set resource links for the Batch Summary
   const linkCount = batch?.batchLinks
     ? Object.values(batch.batchLinks).filter((v) => typeof v === 'string' && v.startsWith('http')).length
     : 0;
+
+  // Duration in days
+  const durationDays = batch?.endDate
+    ? Math.round((new Date(batch.endDate).getTime() - new Date(batch.startDate).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
 
   return (
     <AppLayout>
@@ -87,11 +92,20 @@ export function BatchDetailPage() {
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-1.5 text-xs text-gray-500">
           <button type="button" onClick={() => navigate(ROUTES.COURSES)}
-            className="font-medium hover:text-amber-600 transition-colors">Courses</button>
+            className="font-medium hover:text-amber-600 transition-colors">
+            Courses
+          </button>
           <ChevronRight size={12} className="text-gray-300" />
           <button type="button" onClick={() => navigate(buildRoute.courseDetail(courseId))}
-            className="font-medium hover:text-amber-600 transition-colors">{course?.name ?? 'Course'}</button>
-          {batch && (<><ChevronRight size={12} className="text-gray-300" /><span className="font-medium text-gray-700">{batch.batchName}</span></>)}
+            className="font-medium hover:text-amber-600 transition-colors">
+            {course?.name ?? 'Course'}
+          </button>
+          {batch && (
+            <>
+              <ChevronRight size={12} className="text-gray-300" />
+              <span className="font-medium text-gray-700">{batch.batchName}</span>
+            </>
+          )}
         </nav>
 
         {/* Loading */}
@@ -99,8 +113,15 @@ export function BatchDetailPage() {
           <div className="animate-pulse space-y-4">
             <div className="h-7 w-1/3 rounded bg-gray-200" />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-3"><div className="h-36 rounded-xl bg-gray-100" /><div className="h-36 rounded-xl bg-gray-100" /></div>
-              <div className="space-y-3"><div className="h-36 rounded-xl bg-gray-100" /><div className="h-36 rounded-xl bg-gray-100" /></div>
+              <div className="lg:col-span-2 space-y-3">
+                <div className="h-24 rounded-xl bg-gray-100" />
+                <div className="h-36 rounded-xl bg-gray-100" />
+                <div className="h-48 rounded-xl bg-gray-100" />
+              </div>
+              <div className="space-y-3">
+                <div className="h-36 rounded-xl bg-gray-100" />
+                <div className="h-36 rounded-xl bg-gray-100" />
+              </div>
             </div>
           </div>
         )}
@@ -109,8 +130,13 @@ export function BatchDetailPage() {
         {isError && !isLoading && (
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
             <AlertCircle size={28} className="text-red-400" />
-            <div><p className="font-semibold text-red-700">Failed to load batch</p><p className="mt-1 text-sm text-red-500">{getErrorMessage(error)}</p></div>
-            <Button variant="secondary" size="sm" onClick={() => void refetch()}><RefreshCw size={13} /> Try again</Button>
+            <div>
+              <p className="font-semibold text-red-700">Failed to load batch</p>
+              <p className="mt-1 text-sm text-red-500">{getErrorMessage(error)}</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+              <RefreshCw size={13} /> Try again
+            </Button>
           </div>
         )}
 
@@ -123,12 +149,18 @@ export function BatchDetailPage() {
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="text-2xl font-bold tracking-tight text-gray-900">{batch.batchName}</h1>
-                  <BatchStatusBadge batch={batch} />
+                  <BatchStatusBadge status={batch.status} />
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(batch.startDate)} – {formatDate(batch.endDate)}</span>
-                  <span className="flex items-center gap-1"><IndianRupee size={11} />{batch.price.toLocaleString('en-IN')}</span>
-                  <span className="flex items-center gap-1"><Mail size={11} />{batch.supportEmail}</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={11} />{formatDate(batch.startDate)} – {formatDate(batch.endDate)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <IndianRupee size={11} />{batch.price.toLocaleString('en-IN')}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Mail size={11} />{batch.supportEmail}
+                  </span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -148,10 +180,10 @@ export function BatchDetailPage() {
             {/* 2-col layout */}
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
 
-              {/* Left col — Course Info first, then Batch Info, then tabbed detail */}
+              {/* LEFT — Course info + Batch info + Trainer/Links tabs */}
               <div className="flex flex-col gap-4 lg:col-span-2">
 
-                {/* 1. Course Information */}
+                {/* Course Information */}
                 {course && (
                   <SectionCard title="Course Information">
                     <div className="flex items-center gap-3">
@@ -159,7 +191,7 @@ export function BatchDetailPage() {
                         <BookOpen size={18} className="text-amber-500" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-gray-900 truncate">{course.name}</p>
+                        <p className="truncate font-semibold text-gray-900">{course.name}</p>
                         {course.description && (
                           <p className="mt-0.5 line-clamp-1 text-xs text-gray-500">{course.description}</p>
                         )}
@@ -175,25 +207,38 @@ export function BatchDetailPage() {
                   </SectionCard>
                 )}
 
-                {/* 2. Batch Information */}
+                {/* Batch Information */}
                 <SectionCard title="Batch Information">
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    <InfoCell icon={<Hash size={11} />}          label="Batch Number"  value={`Batch ${batch.batchNumber}`} />
-                    <InfoCell icon={<Calendar size={11} />}      label="Start Date"    value={formatDate(batch.startDate)} />
-                    <InfoCell icon={<Calendar size={11} />}      label="End Date"      value={formatDate(batch.endDate)} />
-                    <InfoCell icon={<IndianRupee size={11} />}   label="Price"         value={`₹${batch.price.toLocaleString('en-IN')}`} />
-                    <InfoCell icon={<Mail size={11} />}          label="Support Email" value={batch.supportEmail} />
+                  <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+                    <InfoCell icon={<Calendar size={12} />}    label="Batch Month & Year" value={batch.batchMonthYear} />
+                    <InfoCell icon={<Calendar size={12} />}    label="Start Date"         value={formatDate(batch.startDate)} />
+                    <InfoCell icon={<Calendar size={12} />}    label="End Date"           value={formatDate(batch.endDate)} />
+                    <InfoCell icon={<IndianRupee size={12} />} label="Price"              value={`₹${batch.price.toLocaleString('en-IN')}`} />
+                    <InfoCell icon={<Mail size={12} />}        label="Support Email"      value={batch.supportEmail} />
+                    {batch.trainer && (
+                      <InfoCell
+                        icon={<span className="text-xs font-bold text-gray-500">T</span>}
+                        label="Trainer"
+                        value={batch.trainer.name}
+                      />
+                    )}
                   </div>
                 </SectionCard>
 
-                {/* 3. Tabbed detail */}
-                <BatchOverview batch={batch} courseId={courseId} canEdit={false} canDelete={false} onDelete={() => {}} />
+                {/* Trainer + Links tabs */}
+                <BatchOverview
+                  batch={batch}
+                  courseId={courseId}
+                  canEdit={false}
+                  canDelete={false}
+                  onDelete={() => {}}
+                />
               </div>
 
-              {/* Right col — Trainer summary + Links summary */}
+              {/* RIGHT — Trainer summary + Batch Summary */}
               <div className="flex flex-col gap-4">
 
-                {/* Trainer summary */}
+                {/* Trainer card */}
                 <SectionCard title="Trainer">
                   {batch.trainer ? (
                     <div className="flex flex-col gap-3">
@@ -222,37 +267,49 @@ export function BatchDetailPage() {
                   )}
                 </SectionCard>
 
-                {/* Links summary */}
-                <SectionCard title="Resource Links">
-                  {batch.batchLinks && linkCount > 0 ? (
-                    <div className="divide-y divide-gray-50">
-                      {[
-                        { key: 'syllabusLink',         label: 'Syllabus' },
-                        { key: 'projectsLink',         label: 'Projects' },
-                        { key: 'trainerDemoRecording', label: 'Trainer Demo' },
-                        { key: 'liveDemoRecording1',   label: 'Live Recording 1' },
-                        { key: 'liveDemoRecording2',   label: 'Live Recording 2' },
-                        { key: 'paymentLink',          label: 'Payment' },
-                        { key: 'whatsappGroupLink',    label: 'WhatsApp Group' },
-                      ]
-                        .filter(({ key }) => {
-                          const v = batch.batchLinks?.[key as keyof typeof batch.batchLinks];
-                          return typeof v === 'string' && v.startsWith('http');
-                        })
-                        .map(({ key, label }) => {
-                          const url = batch.batchLinks?.[key as keyof typeof batch.batchLinks] as string;
-                          return (
-                            <a key={key} href={url} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center justify-between py-2 text-xs font-medium text-gray-700 hover:text-amber-600 transition-colors">
-                              {label}
-                              <ExternalLink size={11} className="text-gray-400" />
-                            </a>
-                          );
-                        })}
+                {/* Batch Summary — replaces Resource Links sidebar */}
+                <SectionCard title="Batch Summary">
+                  <div className="flex flex-col divide-y divide-gray-50">
+
+                    {/* Status */}
+                    <div className="flex items-center justify-between py-2.5 first:pt-0">
+                      <span className="text-xs font-semibold text-gray-400">Status</span>
+                      <BatchStatusBadge status={batch.status} />
                     </div>
-                  ) : (
-                    <p className="text-sm italic text-gray-400">No links set yet.</p>
-                  )}
+
+                    {/* Duration */}
+                    <div className="flex items-center justify-between py-2.5">
+                      <span className="text-xs font-semibold text-gray-400">Duration</span>
+                      <span className="text-sm font-semibold text-gray-800">
+                        {durationDays != null ? `${durationDays} Days` : '—'}
+                      </span>
+                    </div>
+
+                    {/* Trainer */}
+                    <div className="flex items-center justify-between py-2.5">
+                      <span className="text-xs font-semibold text-gray-400">Trainer</span>
+                      <span className="text-sm font-semibold text-gray-800 truncate max-w-[120px]">
+                        {batch.trainer?.name ?? '—'}
+                      </span>
+                    </div>
+
+                    {/* Support Email */}
+                    <div className="flex items-center justify-between py-2.5">
+                      <span className="text-xs font-semibold text-gray-400">Support</span>
+                      <span className="text-xs font-medium text-gray-600 truncate max-w-[140px]">
+                        {batch.supportEmail}
+                      </span>
+                    </div>
+
+                    {/* Resources */}
+                    <div className="flex items-center justify-between py-2.5 last:pb-0">
+                      <span className="text-xs font-semibold text-gray-400">Resources</span>
+                      <span className="flex items-center gap-1 text-sm font-semibold text-gray-800">
+                        <Link2 size={12} className="text-gray-400" />
+                        {linkCount} {linkCount === 1 ? 'Link' : 'Links'}
+                      </span>
+                    </div>
+                  </div>
                 </SectionCard>
               </div>
             </div>
@@ -260,7 +317,12 @@ export function BatchDetailPage() {
         )}
       </div>
 
-      <DeleteBatchDialog batch={batchToDelete} loading={isDeleting} onConfirm={handleDeleteConfirm} onCancel={() => setBatchToDelete(null)} />
+      <DeleteBatchDialog
+        batch={batchToDelete}
+        loading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setBatchToDelete(null)}
+      />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </AppLayout>
   );

@@ -23,11 +23,13 @@ export function EditBatchPage() {
     reset();
     updateBatch(
       {
-        batchName:    data.batchName,
-        startDate:    data.startDate,
-        endDate:      data.endDate || undefined,
-        price:        data.price,
-        supportEmail: data.supportEmail,
+        batchMonthYear: data.batchMonthYear || undefined,
+        batchName:      data.batchName,
+        status:         data.status,
+        startDate:      data.startDate,
+        endDate:        data.endDate || undefined,
+        price:          data.price,
+        supportEmail:   data.supportEmail,
         trainer: {
           name:           data.trainer.name,
           email:          data.trainer.email,
@@ -43,6 +45,7 @@ export function EditBatchPage() {
           liveDemoRecording2:   data.batchLinks?.liveDemoRecording2   || undefined,
           paymentLink:          data.batchLinks?.paymentLink          || undefined,
           whatsappGroupLink:    data.batchLinks?.whatsappGroupLink    || undefined,
+          communityLink:        data.batchLinks?.communityLink        || undefined,
         },
       },
       {

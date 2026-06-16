@@ -1,4 +1,10 @@
+// ── Auth pages
 export { LoginPage } from './LoginPage';
+export { RegisterPage } from './RegisterPage';
+export { ForgotPasswordPage } from './ForgotPasswordPage';
+export { ResetPasswordPage } from './ResetPasswordPage';
+
+// ── App pages
 export { DashboardPage } from './DashboardPage';
 export { CoursesPage } from './CoursesPage';
 export { CourseDetailPage } from './CourseDetailPage';

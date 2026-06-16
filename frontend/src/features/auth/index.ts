@@ -1,3 +1,6 @@
 export { LoginForm } from './LoginForm';
-export { loginSchema } from './auth.schema';
-export type { LoginFormValues } from './auth.schema';
+export { RegisterForm } from './RegisterForm';
+export { ForgotPasswordForm } from './ForgotPasswordForm';
+export { ResetPasswordForm } from './ResetPasswordForm';
+export { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from './auth.schema';
+export type { LoginFormValues, RegisterFormValues, ForgotPasswordFormValues, ResetPasswordFormValues } from './auth.schema';

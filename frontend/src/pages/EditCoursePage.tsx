@@ -20,7 +20,12 @@ export function EditCoursePage() {
   const handleSubmit = (data: CourseFormValues) => {
     reset();
     updateCourse(
-      { name: data.name, description: data.description || undefined },
+      {
+        name:         data.name,
+        description:  data.description  || undefined,
+        bannerImage:  data.bannerImage  ?? null,
+        courseOffers: data.courseOffers || undefined,
+      },
       {
         onSuccess: () => {
           addToast('Course updated successfully!', 'success');
@@ -48,17 +53,14 @@ export function EditCoursePage() {
         </div>
 
         {isLoading && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse space-y-4">
-            <div className="h-4 w-1/3 rounded bg-gray-200" />
-            <div className="h-11 rounded-lg bg-gray-100" />
-            <div className="h-4 w-1/3 rounded bg-gray-200" />
-            <div className="h-28 rounded-lg bg-gray-100" />
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm animate-pulse space-y-5">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-11 rounded-lg bg-gray-100" />)}
           </div>
         )}
 
         {isError && !isLoading && (
-          <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
+          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <AlertCircle size={16} className="shrink-0 text-red-500" />
             Failed to load course: {getErrorMessage(fetchError)}
           </div>
         )}

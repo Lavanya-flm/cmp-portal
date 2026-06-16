@@ -119,6 +119,12 @@ export interface Course {
   id: string;
   name: string;
   description: string | null;
+  /** Base64 data URL or remote URL of the uploaded banner */
+  bannerImage?: string | null;
+  /** Upcoming | Live | Completed */
+  status?: string;
+  /** Multi-line text listing what the course offers */
+  courseOffers?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -126,11 +132,17 @@ export interface Course {
 export interface CreateCourseRequest {
   name: string;
   description?: string;
+  status?: string;
+  bannerImage?: string | null;
+  courseOffers?: string;
 }
 
 export interface UpdateCourseRequest {
   name?: string;
   description?: string;
+  status?: string;
+  bannerImage?: string | null;
+  courseOffers?: string;
 }
 
 // ─── Batch ────────────────────────────────────────────────────────────────────
@@ -155,6 +167,7 @@ export interface BatchLinks {
   liveDemoRecording2: string | null;
   paymentLink: string | null;
   whatsappGroupLink: string | null;
+  communityLink: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -163,7 +176,9 @@ export interface Batch {
   id: string;
   courseId: string;
   batchNumber: number;
+  batchMonthYear: string | null;
   batchName: string;
+  status: string;
   startDate: string;
   endDate: string | null;
   price: number;
@@ -190,11 +205,14 @@ export interface CreateBatchLinksRequest {
   liveDemoRecording2?: string;
   paymentLink?: string;
   whatsappGroupLink?: string;
+  communityLink?: string;
 }
 
 export interface CreateBatchRequest {
   batchNumber: number;
+  batchMonthYear?: string;
   batchName: string;
+  status?: string;
   startDate: string;
   endDate?: string;
   price: number;
@@ -205,6 +223,8 @@ export interface CreateBatchRequest {
 
 export interface UpdateBatchRequest {
   batchName?: string;
+  batchMonthYear?: string;
+  status?: string;
   startDate?: string;
   endDate?: string;
   price?: number;

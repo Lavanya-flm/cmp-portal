@@ -1,20 +1,18 @@
 import type { Course, Batch } from '../../../types';
 
-export type CourseStatus = 'draft' | 'upcoming' | 'live' | 'completed' | 'archived';
+// ─── 3 allowed statuses only ──────────────────────────────────────────────────
+export type CourseStatus = 'upcoming' | 'live' | 'completed';
 
-// ─── Derive status from course + batch data ───────────────────────────────────
+// ─── Derive status from batch data ───────────────────────────────────────────
 
-export function deriveCourseStatus(course: Course, batches: Batch[]): CourseStatus {
-  if (!batches.length) {
-    // No batches — treat as upcoming if created recently (< 7 days), else draft
-    const age = Date.now() - new Date(course.createdAt).getTime();
-    return age < 7 * 24 * 60 * 60 * 1000 ? 'upcoming' : 'draft';
-  }
+export function deriveCourseStatus(_course: Course, batches: Batch[]): CourseStatus {
+  if (!batches.length) return 'upcoming';
 
   const now = Date.now();
+
   const hasLive = batches.some((b) => {
     const start = new Date(b.startDate).getTime();
-    const end = b.endDate ? new Date(b.endDate).getTime() : Infinity;
+    const end   = b.endDate ? new Date(b.endDate).getTime() : Infinity;
     return now >= start && now <= end;
   });
   if (hasLive) return 'live';
@@ -25,22 +23,12 @@ export function deriveCourseStatus(course: Course, batches: Batch[]): CourseStat
   return 'completed';
 }
 
-// ─── Badge styles ─────────────────────────────────────────────────────────────
+// ─── Badge config ─────────────────────────────────────────────────────────────
 
-const config: Record<CourseStatus, { label: string; classes: string }> = {
-  draft:     { label: 'Draft',     classes: 'bg-gray-100 text-gray-600 border-gray-200' },
-  upcoming:  { label: 'Upcoming',  classes: 'bg-blue-100 text-blue-700 border-blue-200' },
-  live:      { label: 'Live',      classes: 'bg-green-100 text-green-700 border-green-200' },
-  completed: { label: 'Completed', classes: 'bg-purple-100 text-purple-700 border-purple-200' },
-  archived:  { label: 'Archived',  classes: 'bg-slate-100 text-slate-600 border-slate-200' },
-};
-
-const dotColor: Record<CourseStatus, string> = {
-  draft:     'bg-gray-400',
-  upcoming:  'bg-blue-500',
-  live:      'bg-green-500',
-  completed: 'bg-purple-500',
-  archived:  'bg-slate-400',
+const config: Record<CourseStatus, { label: string; classes: string; dot: string }> = {
+  upcoming:  { label: 'Upcoming',  classes: 'bg-blue-50 text-blue-700 border-blue-200',   dot: 'bg-blue-500' },
+  live:      { label: 'Live',      classes: 'bg-green-50 text-green-700 border-green-200', dot: 'bg-green-500' },
+  completed: { label: 'Completed', classes: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
 };
 
 interface CourseStatusBadgeProps {
@@ -48,10 +36,10 @@ interface CourseStatusBadgeProps {
 }
 
 export function CourseStatusBadge({ status }: CourseStatusBadgeProps) {
-  const { label, classes } = config[status];
+  const { label, classes, dot } = config[status] ?? config.upcoming;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${classes}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dotColor[status]}`} />
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${classes}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       {label}
     </span>
   );

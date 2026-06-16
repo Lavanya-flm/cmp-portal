@@ -21,12 +21,14 @@ export function CreateBatchPage() {
     reset();
     createBatch(
       {
-        batchNumber:  data.batchNumber,
-        batchName:    data.batchName,
-        startDate:    data.startDate,
-        endDate:      data.endDate || undefined,
-        price:        data.price,
-        supportEmail: data.supportEmail,
+        batchNumber:    1,
+        batchMonthYear: data.batchMonthYear,
+        batchName:      data.batchName,
+        status:         data.status,
+        startDate:      data.startDate,
+        endDate:       data.endDate || undefined,
+        price:         data.price,
+        supportEmail:  data.supportEmail,
         trainer: {
           name:           data.trainer.name,
           email:          data.trainer.email,
@@ -42,6 +44,7 @@ export function CreateBatchPage() {
           liveDemoRecording2:   data.batchLinks?.liveDemoRecording2   || undefined,
           paymentLink:          data.batchLinks?.paymentLink          || undefined,
           whatsappGroupLink:    data.batchLinks?.whatsappGroupLink    || undefined,
+          communityLink:        data.batchLinks?.communityLink        || undefined,
         },
       },
       {

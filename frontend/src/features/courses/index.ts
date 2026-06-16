@@ -6,7 +6,5 @@ export { CourseForm } from './components/CourseForm';
 export { DeleteCourseDialog } from './components/DeleteCourseDialog';
 export { EmptyState } from './components/EmptyState';
 export { LoadingState } from './components/LoadingState';
-export { CourseStatusBadge, deriveCourseStatus } from './components/CourseStatusBadge';
-export type { CourseStatus } from './components/CourseStatusBadge';
 export { courseSchema } from './course.schema';
 export type { CourseFormValues } from './course.schema';

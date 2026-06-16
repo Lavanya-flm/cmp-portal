@@ -1,14 +1,13 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { ErrorBanner } from '../../../components/auth/ErrorBanner';
-import { batchSchema, BatchFormValues } from '../batch.schema';
+import { batchSchema, BatchFormValues, BATCH_STATUSES } from '../batch.schema';
 import { getErrorMessage } from '../../../utils/format';
 import type { Batch } from '../../../types';
-
-// ─── Section header ───────────────────────────────────────────────────────────
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -18,17 +17,13 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── 2-col row ────────────────────────────────────────────────────────────────
-
-function Row({ children }: { children: React.ReactNode }) {
+function ThreeCol({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }
 
 function TwoCol({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
 }
-
-// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface BatchFormProps {
   defaultValues?: Partial<Batch>;
@@ -39,8 +34,6 @@ interface BatchFormProps {
   submitLabel?: string;
   isEditMode?: boolean;
 }
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export function BatchForm({
   defaultValues,
@@ -74,34 +67,49 @@ export function BatchForm({
       {/* ── Batch Information ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-4">
         <SectionTitle>Batch Information</SectionTitle>
-        <Row>
+        <TwoCol>
           <Input
-            label="Batch Number"
-            type="number"
-            min={1}
-            placeholder="Batch Number"
-            error={errors.batchNumber?.message}
-            disabled={isEditMode}
-            hint={isEditMode ? 'Cannot be changed after creation.' : undefined}
-            {...register('batchNumber')}
-          />
-          <Input
-            label="Batch Name"
-            placeholder="Batch Name"
+            label="Batch Name *"
+            placeholder="Name"
             error={errors.batchName?.message}
             {...register('batchName')}
           />
           <Input
-            label="Support Email"
+            label="Support Email *"
             type="email"
-            placeholder="Support Email"
+            placeholder="Email"
             error={errors.supportEmail?.message}
             {...register('supportEmail')}
           />
-        </Row>
-        <Row>
+        </TwoCol>
+        <TwoCol>
+          {/* Status dropdown */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">Status *</label>
+            <div className="relative">
+              <select
+                {...register('status')}
+                className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white pl-3.5 pr-8 text-sm text-gray-700 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 hover:border-gray-400 transition-colors"
+              >
+                {BATCH_STATUSES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+            {errors.status && <p className="text-xs font-medium text-red-500">{errors.status.message}</p>}
+          </div>
+
           <Input
-            label="Start Date"
+            label="Batch Month & Year *"
+            placeholder="July 2026"
+            error={errors.batchMonthYear?.message}
+            {...register('batchMonthYear')}
+          />
+        </TwoCol>
+        <ThreeCol>
+          <Input
+            label="Start Date *"
             type="date"
             error={errors.startDate?.message}
             {...register('startDate')}
@@ -110,11 +118,10 @@ export function BatchForm({
             label="End Date"
             type="date"
             error={errors.endDate?.message}
-            hint="Optional"
             {...register('endDate')}
           />
           <Input
-            label="Price (₹)"
+            label="Price (₹) *"
             type="number"
             min={0}
             step={0.01}
@@ -122,50 +129,47 @@ export function BatchForm({
             error={errors.price?.message}
             {...register('price')}
           />
-        </Row>
+        </ThreeCol>
       </div>
 
       {/* ── Trainer Details ───────────────────────────────────────────── */}
       <div className="flex flex-col gap-4">
         <SectionTitle>Trainer Details</SectionTitle>
-        <Row>
+        <ThreeCol>
           <Input
-            label="Trainer Name"
-            placeholder="Trainer Name"
+            label="Trainer Name *"
+            placeholder="Name"
             error={errors.trainer?.name?.message}
             {...register('trainer.name')}
           />
           <Input
-            label="Trainer Email"
+            label="Trainer Email *"
             type="email"
-            placeholder="Trainer Email"
+            placeholder="Email"
             error={errors.trainer?.email?.message}
             {...register('trainer.email')}
           />
           <Input
             label="Phone Number"
-            placeholder="Phone Number"
+            placeholder="Number"
             error={errors.trainer?.phone?.message}
-            hint="Optional"
             {...register('trainer.phone')}
           />
-        </Row>
+        </ThreeCol>
         <TwoCol>
           <Input
             label="Experience (Years)"
             type="number"
             min={0}
             max={60}
-            placeholder="Experience (Years)"
+            placeholder="Experience"
             error={errors.trainer?.experience?.message}
-            hint="Optional"
             {...register('trainer.experience')}
           />
           <Input
             label="Current Company"
-            placeholder="Current Company"
+            placeholder="Company"
             error={errors.trainer?.currentCompany?.message}
-            hint="Optional"
             {...register('trainer.currentCompany')}
           />
         </TwoCol>
@@ -173,28 +177,44 @@ export function BatchForm({
 
       {/* ── Resource Links ────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4">
-        <SectionTitle>Resource Links (Optional)</SectionTitle>
-        <Row>
-          <Input label="Syllabus Link"           type="url" placeholder="Syllabus Link"           error={errors.batchLinks?.syllabusLink?.message}         {...register('batchLinks.syllabusLink')} />
-          <Input label="Projects Link"           type="url" placeholder="Projects Link"           error={errors.batchLinks?.projectsLink?.message}         {...register('batchLinks.projectsLink')} />
-          <Input label="Trainer Demo Recording"  type="url" placeholder="Trainer Demo Recording"  error={errors.batchLinks?.trainerDemoRecording?.message} {...register('batchLinks.trainerDemoRecording')} />
-        </Row>
-        <Row>
-          <Input label="Live Demo Recording 1"   type="url" placeholder="Live Demo Recording 1"   error={errors.batchLinks?.liveDemoRecording1?.message}   {...register('batchLinks.liveDemoRecording1')} />
-          <Input label="Live Demo Recording 2"   type="url" placeholder="Live Demo Recording 2"   error={errors.batchLinks?.liveDemoRecording2?.message}   {...register('batchLinks.liveDemoRecording2')} />
-          <Input label="Payment Link"            type="url" placeholder="Payment Link"            error={errors.batchLinks?.paymentLink?.message}          {...register('batchLinks.paymentLink')} />
-        </Row>
+        <SectionTitle>Resource Links</SectionTitle>
         <TwoCol>
-          <Input label="WhatsApp Group Link"     type="url" placeholder="WhatsApp Group Link"     error={errors.batchLinks?.whatsappGroupLink?.message}    {...register('batchLinks.whatsappGroupLink')} />
+          <Input label="Syllabus Link"          type="url" placeholder="https://"
+            error={errors.batchLinks?.syllabusLink?.message}         {...register('batchLinks.syllabusLink')} />
+          <Input label="Projects Link"          type="url" placeholder="https://"
+            error={errors.batchLinks?.projectsLink?.message}         {...register('batchLinks.projectsLink')} />
+        </TwoCol>
+        <TwoCol>
+          <Input label="Trainer Demo Recording" type="url" placeholder="https://"
+            error={errors.batchLinks?.trainerDemoRecording?.message} {...register('batchLinks.trainerDemoRecording')} />
+          <Input label="Community Link"         type="url" placeholder="https://"
+            error={errors.batchLinks?.communityLink?.message}        {...register('batchLinks.communityLink')} />
+        </TwoCol>
+        <TwoCol>
+          <Input label="Live Demo Recording 1"  type="url" placeholder="https://"
+            error={errors.batchLinks?.liveDemoRecording1?.message}   {...register('batchLinks.liveDemoRecording1')} />
+          <Input label="Live Demo Recording 2"  type="url" placeholder="https://"
+            error={errors.batchLinks?.liveDemoRecording2?.message}   {...register('batchLinks.liveDemoRecording2')} />
+        </TwoCol>
+        <TwoCol>
+          <Input label="Payment Link"           type="url" placeholder="https://"
+            error={errors.batchLinks?.paymentLink?.message}          {...register('batchLinks.paymentLink')} />
+          <Input label="WhatsApp Group Link"    type="url" placeholder="https://"
+            error={errors.batchLinks?.whatsappGroupLink?.message}    {...register('batchLinks.whatsappGroupLink')} />
         </TwoCol>
       </div>
 
-      {/* ── Actions ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
         <Button type="button" variant="secondary" size="md" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit" variant="primary" size="md" loading={isSubmitting} disabled={!isDirty && isEditMode}>
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          loading={isSubmitting}
+          disabled={!isDirty && isEditMode}
+        >
           {submitLabel}
         </Button>
       </div>
@@ -202,32 +222,34 @@ export function BatchForm({
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Default values builder ───────────────────────────────────────────────────
 
 function buildDefaults(batch?: Partial<Batch>): Partial<BatchFormValues> {
   if (!batch) return {};
   return {
-    batchNumber:  batch.batchNumber,
-    batchName:    batch.batchName ?? '',
-    startDate:    batch.startDate ? batch.startDate.split('T')[0] : '',
-    endDate:      batch.endDate ? batch.endDate.split('T')[0] : '',
-    price:        batch.price,
-    supportEmail: batch.supportEmail ?? '',
+    batchMonthYear: batch.batchMonthYear ?? '',
+    batchName:      batch.batchName      ?? '',
+    status:         (batch.status as BatchFormValues['status']) ?? 'Upcoming',
+    startDate:      batch.startDate ? batch.startDate.split('T')[0] : '',
+    endDate:        batch.endDate   ? batch.endDate.split('T')[0]   : '',
+    price:          batch.price,
+    supportEmail:   batch.supportEmail ?? '',
     trainer: {
-      name:           batch.trainer?.name ?? '',
-      email:          batch.trainer?.email ?? '',
-      phone:          batch.trainer?.phone ?? '',
-      experience:     batch.trainer?.experience ?? undefined,
+      name:           batch.trainer?.name           ?? '',
+      email:          batch.trainer?.email          ?? '',
+      phone:          batch.trainer?.phone          ?? '',
+      experience:     batch.trainer?.experience     ?? undefined,
       currentCompany: batch.trainer?.currentCompany ?? '',
     },
     batchLinks: {
-      syllabusLink:         batch.batchLinks?.syllabusLink ?? '',
-      projectsLink:         batch.batchLinks?.projectsLink ?? '',
+      syllabusLink:         batch.batchLinks?.syllabusLink         ?? '',
+      projectsLink:         batch.batchLinks?.projectsLink         ?? '',
       trainerDemoRecording: batch.batchLinks?.trainerDemoRecording ?? '',
-      liveDemoRecording1:   batch.batchLinks?.liveDemoRecording1 ?? '',
-      liveDemoRecording2:   batch.batchLinks?.liveDemoRecording2 ?? '',
-      paymentLink:          batch.batchLinks?.paymentLink ?? '',
-      whatsappGroupLink:    batch.batchLinks?.whatsappGroupLink ?? '',
+      liveDemoRecording1:   batch.batchLinks?.liveDemoRecording1   ?? '',
+      liveDemoRecording2:   batch.batchLinks?.liveDemoRecording2   ?? '',
+      paymentLink:          batch.batchLinks?.paymentLink          ?? '',
+      whatsappGroupLink:    batch.batchLinks?.whatsappGroupLink    ?? '',
+      communityLink:        batch.batchLinks?.communityLink        ?? '',
     },
   };
 }

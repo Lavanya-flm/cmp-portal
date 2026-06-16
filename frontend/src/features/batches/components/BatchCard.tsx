@@ -53,10 +53,10 @@ export function BatchCard({ batch, courseId, canEdit, canDelete, onDelete }: Bat
   const goToDetail = () => navigate(buildRoute.batchDetail(courseId, batch.id));
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
 
       {/* Batch avatar */}
-      <div className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border ${color} text-sm font-bold`}>
+      <div className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl border ${color} text-sm font-bold`}>
         <span className="text-[10px] font-semibold opacity-80">B{batch.batchNumber}</span>
       </div>
 
@@ -72,7 +72,7 @@ export function BatchCard({ batch, courseId, canEdit, canDelete, onDelete }: Bat
           >
             {batch.batchName}
           </button>
-          <BatchStatusBadge batch={batch} />
+          <BatchStatusBadge status={batch.status} />
         </div>
 
         {/* Meta cells — all aligned on same baseline */}
