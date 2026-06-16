@@ -62,6 +62,9 @@ export const API_ENDPOINTS = {
   // Batches
   BATCHES_BY_COURSE:(courseId: string) => `/courses/${courseId}/batches`,
   BATCH_BY_ID:      (id: string) => `/batches/${id}`,
+
+  // Dashboard
+  DASHBOARD: '/dashboard',
 } as const;
 
 // ─── Token storage keys ───────────────────────────────────────────────────────
@@ -89,4 +92,7 @@ export const QUERY_KEYS = {
   // Batches
   BATCHES:      (courseId: string, params?: object) => ['batches', courseId, params] as const,
   BATCH_BY_ID:  (id: string)                        => ['batches', id] as const,
+
+  // Dashboard
+  DASHBOARD: ['dashboard'] as const,
 } as const;

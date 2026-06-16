@@ -2,9 +2,21 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ROUTES } from '../utils/constants';
 import { useAuthStore } from '../store/auth.store';
 
-// ─── Placeholder page stubs ───────────────────────────────────────────────────
-// These are replaced one-by-one during Phase 6+ (Layout & Pages build-out).
+// ─── Pages ────────────────────────────────────────────────────────────────────
+import { DashboardPage }    from '../pages/DashboardPage';
+import { LoginPage }        from '../pages/LoginPage';
+import { CoursesPage }      from '../pages/CoursesPage';
+import { CourseDetailPage } from '../pages/CourseDetailPage';
+import { CreateCoursePage } from '../pages/CreateCoursePage';
+import { EditCoursePage }   from '../pages/EditCoursePage';
+import { BatchDetailPage }  from '../pages/BatchDetailPage';
+import { CreateBatchPage }  from '../pages/CreateBatchPage';
+import { EditBatchPage }    from '../pages/EditBatchPage';
+import { UsersPage }        from '../pages/UsersPage';
+import { UserDetailPage }   from '../pages/UserDetailPage';
+import { CreateUserPage }   from '../pages/CreateUserPage';
 
+// ─── 404 ─────────────────────────────────────────────────────────────────────
 const NotFoundPage = () => (
   <div className="flex min-h-screen items-center justify-center">
     <div className="text-center">
@@ -14,90 +26,82 @@ const NotFoundPage = () => (
   </div>
 );
 
-const PlaceholderPage = ({ name }: { name: string }) => (
-  <div className="flex min-h-screen items-center justify-center">
-    <p className="text-gray-400 text-lg">{name} — coming in next phase</p>
-  </div>
-);
-
-// ─── Auth guard ───────────────────────────────────────────────────────────────
-
+// ─── Auth guards ─────────────────────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
-  }
+  if (!isAuthenticated) return <Navigate to={ROUTES.LOGIN} replace />;
   return <>{children}</>;
 }
 
 function RequireGuest({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (isAuthenticated) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
-  }
+  if (isAuthenticated) return <Navigate to={ROUTES.DASHBOARD} replace />;
   return <>{children}</>;
 }
 
-// ─── Router definition ────────────────────────────────────────────────────────
-
+// ─── Router ───────────────────────────────────────────────────────────────────
 const router = createBrowserRouter([
-  // ── Public ────────────────────────────────────────────────────────────────
+
+  // ── Auth (public, redirect if already logged in) ──────────────────────────
   {
     path: ROUTES.LOGIN,
-    element: (
-      <RequireGuest>
-        <PlaceholderPage name="Login Page" />
-      </RequireGuest>
-    ),
+    element: <RequireGuest><LoginPage /></RequireGuest>,
   },
 
-  // ── Protected ─────────────────────────────────────────────────────────────
+  // ── Dashboard ─────────────────────────────────────────────────────────────
   {
     path: ROUTES.DASHBOARD,
-    element: (
-      <RequireAuth>
-        <PlaceholderPage name="Dashboard" />
-      </RequireAuth>
-    ),
+    element: <RequireAuth><DashboardPage /></RequireAuth>,
   },
+
+  // ── Courses ───────────────────────────────────────────────────────────────
   {
     path: ROUTES.COURSES,
-    element: (
-      <RequireAuth>
-        <PlaceholderPage name="Courses List" />
-      </RequireAuth>
-    ),
+    element: <RequireAuth><CoursesPage /></RequireAuth>,
+  },
+  {
+    path: ROUTES.COURSE_CREATE,
+    element: <RequireAuth><CreateCoursePage /></RequireAuth>,
   },
   {
     path: ROUTES.COURSE_DETAIL,
-    element: (
-      <RequireAuth>
-        <PlaceholderPage name="Course Detail" />
-      </RequireAuth>
-    ),
+    element: <RequireAuth><CourseDetailPage /></RequireAuth>,
   },
+  {
+    path: ROUTES.COURSE_EDIT,
+    element: <RequireAuth><EditCoursePage /></RequireAuth>,
+  },
+
+  // ── Batches ───────────────────────────────────────────────────────────────
+  {
+    path: ROUTES.BATCH_CREATE,
+    element: <RequireAuth><CreateBatchPage /></RequireAuth>,
+  },
+  {
+    path: ROUTES.BATCH_DETAIL,
+    element: <RequireAuth><BatchDetailPage /></RequireAuth>,
+  },
+  {
+    path: ROUTES.BATCH_EDIT,
+    element: <RequireAuth><EditBatchPage /></RequireAuth>,
+  },
+
+  // ── Users ─────────────────────────────────────────────────────────────────
   {
     path: ROUTES.USERS,
-    element: (
-      <RequireAuth>
-        <PlaceholderPage name="Users List" />
-      </RequireAuth>
-    ),
+    element: <RequireAuth><UsersPage /></RequireAuth>,
   },
   {
-    path: ROUTES.PROFILE,
-    element: (
-      <RequireAuth>
-        <PlaceholderPage name="My Profile" />
-      </RequireAuth>
-    ),
+    path: ROUTES.USER_CREATE,
+    element: <RequireAuth><CreateUserPage /></RequireAuth>,
+  },
+  {
+    path: ROUTES.USER_DETAIL,
+    element: <RequireAuth><UserDetailPage /></RequireAuth>,
   },
 
   // ── 404 ───────────────────────────────────────────────────────────────────
-  {
-    path: '*',
-    element: <NotFoundPage />,
-  },
+  { path: '*', element: <NotFoundPage /> },
 ]);
 
 export function AppRouter() {

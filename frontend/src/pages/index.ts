@@ -1,2 +1,12 @@
-// Page components are built in Phase 6.
-// Export pages here as they are created.
+export { DashboardPage }   from './DashboardPage';
+export { LoginPage }       from './LoginPage';
+export { CoursesPage }     from './CoursesPage';
+export { CourseDetailPage } from './CourseDetailPage';
+export { CreateCoursePage } from './CreateCoursePage';
+export { EditCoursePage }  from './EditCoursePage';
+export { BatchDetailPage } from './BatchDetailPage';
+export { CreateBatchPage } from './CreateBatchPage';
+export { EditBatchPage }   from './EditBatchPage';
+export { UsersPage }       from './UsersPage';
+export { UserDetailPage }  from './UserDetailPage';
+export { CreateUserPage }  from './CreateUserPage';

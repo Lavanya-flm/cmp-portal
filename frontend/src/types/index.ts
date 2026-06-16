@@ -222,3 +222,36 @@ export interface PaginationQuery {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+export interface DashboardSummary {
+  totalCourses: number;
+  totalBatches: number;
+  liveBatches: number;
+  upcomingBatches: number;
+  completedBatches: number;
+  totalUsers: number;
+}
+
+export interface DashboardRecentCourse {
+  id: string;
+  name: string;
+  totalBatches: number;
+  createdAt: string;
+}
+
+export interface DashboardRecentBatch {
+  id: string;
+  batchName: string;
+  batchMonthYear: string | null;
+  status: string;
+  courseName: string;
+}
+
+export interface DashboardResponse {
+  role: string;
+  summary: DashboardSummary | null;
+  recentCourses: DashboardRecentCourse[];
+  recentBatches: DashboardRecentBatch[];
+}
