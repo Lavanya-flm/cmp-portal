@@ -4,6 +4,7 @@ import { authRouter } from '../modules/auth/auth.routes';
 import { courseRouter } from '../modules/course/course.routes';
 import { batchNestedRouter, batchFlatRouter } from '../modules/batch/batch.routes';
 import { userRouter } from '../modules/user/user.routes';
+import { dashboardRouter } from '../modules/dashboard/dashboard.routes';
 
 const router = Router();
 
@@ -25,5 +26,8 @@ router.use(
 
 // ─── Batches (flat single-resource routes) ────────────────────
 router.use('/batches', batchFlatRouter);     // GET|PUT|DELETE /batches/:id
+
+// ─── Dashboard ────────────────────────────────────────────────
+router.use('/dashboard', dashboardRouter);
 
 export { router };
