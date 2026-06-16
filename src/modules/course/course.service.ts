@@ -16,11 +16,14 @@ import { PaginationMeta } from '../../core/types';
 
 function toResponse(course: CourseEntity): CourseResponse {
   return {
-    id: course.id,
-    name: course.name,
-    description: course.description,
-    createdAt: course.createdAt,
-    updatedAt: course.updatedAt,
+    id:           course.id,
+    name:         course.name,
+    description:  course.description,
+    status:       course.status       ?? null,
+    bannerImage:  course.bannerImage  ?? null,
+    courseOffers: course.courseOffers ?? null,
+    createdAt:    course.createdAt,
+    updatedAt:    course.updatedAt,
   };
 }
 

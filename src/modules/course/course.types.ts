@@ -9,11 +9,17 @@ export type CourseEntity = Course;
 export interface CreateCourseDto {
   name: string;
   description?: string;
+  status?: string;
+  bannerImage?: string | null;
+  courseOffers?: string | null;
 }
 
 export interface UpdateCourseDto {
   name?: string;
   description?: string;
+  status?: string;
+  bannerImage?: string | null;
+  courseOffers?: string | null;
 }
 
 export interface CourseQueryDto {
@@ -30,6 +36,9 @@ export interface CourseResponse {
   id: string;
   name: string;
   description: string | null;
+  status: string | null;
+  bannerImage: string | null;
+  courseOffers: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -2,7 +2,10 @@
 
 export const ROUTES = {
   // Public
-  LOGIN: '/login',
+  LOGIN:           '/login',
+  REGISTER:        '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD:  '/reset-password',
 
   // Dashboard
   DASHBOARD: '/',
@@ -22,6 +25,7 @@ export const ROUTES = {
   USERS: '/users',
   USER_DETAIL: '/users/:id',
   USER_CREATE: '/users/new',
+  USER_EDIT:   '/users/:id/edit',
 
   // Profile
   PROFILE: '/profile',
@@ -36,17 +40,21 @@ export const buildRoute = {
   batchCreate:  (courseId: string) => `/courses/${courseId}/batches/new`,
   batchEdit:    (courseId: string, batchId: string) => `/courses/${courseId}/batches/${batchId}/edit`,
   userDetail:   (id: string) => `/users/${id}`,
+  userEdit:     (id: string) => `/users/${id}/edit`,
 };
 
 // ─── API endpoint paths (relative to VITE_API_BASE_URL) ──────────────────────
 
 export const API_ENDPOINTS = {
   // Auth
-  AUTH_LOGIN:       '/auth/login',
-  AUTH_REFRESH:     '/auth/refresh',
-  AUTH_LOGOUT:      '/auth/logout',
-  AUTH_LOGOUT_ALL:  '/auth/logout-all',
-  AUTH_ME:          '/auth/me',
+  AUTH_LOGIN:            '/auth/login',
+  AUTH_REGISTER:         '/auth/register',
+  AUTH_FORGOT_PASSWORD:  '/auth/forgot-password',
+  AUTH_RESET_PASSWORD:   '/auth/reset-password',
+  AUTH_REFRESH:          '/auth/refresh',
+  AUTH_LOGOUT:           '/auth/logout',
+  AUTH_LOGOUT_ALL:       '/auth/logout-all',
+  AUTH_ME:               '/auth/me',
 
   // Users
   USERS:            '/users',
@@ -73,6 +81,7 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN:  'cmp_access_token',
   REFRESH_TOKEN: 'cmp_refresh_token',
   USER:          'cmp_user',
+  REMEMBER_ME:   'cmp_remember_me',
 } as const;
 
 // ─── React Query cache keys ───────────────────────────────────────────────────

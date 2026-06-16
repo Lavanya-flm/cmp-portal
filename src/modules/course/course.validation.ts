@@ -12,6 +12,13 @@ export const createCourseSchema = Joi.object({
   description: Joi.string().trim().max(2000).optional().allow('', null).messages({
     'string.max': 'Description must not exceed 2000 characters',
   }),
+  status: Joi.string().valid('Upcoming', 'Live', 'Completed').default('Upcoming').messages({
+    'any.only': 'Status must be one of: Upcoming, Live, Completed',
+  }),
+  bannerImage:  Joi.string().optional().allow('', null),
+  courseOffers: Joi.string().trim().max(5000).optional().allow('', null).messages({
+    'string.max': 'Course offers must not exceed 5000 characters',
+  }),
 });
 
 // ─── Update Course ────────────────────────────────────────────────────────────
@@ -25,6 +32,13 @@ export const updateCourseSchema = Joi.object({
   description: Joi.string().trim().max(2000).optional().allow('', null).messages({
     'string.max': 'Description must not exceed 2000 characters',
   }),
+  status: Joi.string().valid('Upcoming', 'Live', 'Completed').optional().messages({
+    'any.only': 'Status must be one of: Upcoming, Live, Completed',
+  }),
+  bannerImage:  Joi.string().optional().allow('', null),
+  courseOffers: Joi.string().trim().max(5000).optional().allow('', null).messages({
+    'string.max': 'Course offers must not exceed 5000 characters',
+  }),
 }).min(1).messages({
   'object.min': 'At least one field must be provided for update',
 });
@@ -32,27 +46,11 @@ export const updateCourseSchema = Joi.object({
 // ─── List Courses (query params) ──────────────────────────────────────────────
 
 export const courseQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1).messages({
-    'number.base': 'Page must be a number',
-    'number.min': 'Page must be at least 1',
-  }),
-  limit: Joi.number().integer().min(1).max(100).default(10).messages({
-    'number.base': 'Limit must be a number',
-    'number.min': 'Limit must be at least 1',
-    'number.max': 'Limit must not exceed 100',
-  }),
-  search: Joi.string().trim().max(100).optional().allow('').messages({
-    'string.max': 'Search term must not exceed 100 characters',
-  }),
-  sortBy: Joi.string()
-    .valid('name', 'createdAt', 'updatedAt')
-    .default('createdAt')
-    .messages({
-      'any.only': 'sortBy must be one of: name, createdAt, updatedAt',
-    }),
-  sortOrder: Joi.string().valid('asc', 'desc').default('desc').messages({
-    'any.only': 'sortOrder must be asc or desc',
-  }),
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  search: Joi.string().trim().max(100).optional().allow(''),
+  sortBy: Joi.string().valid('name', 'createdAt', 'updatedAt').default('createdAt'),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });
 
 // ─── Route params ─────────────────────────────────────────────────────────────

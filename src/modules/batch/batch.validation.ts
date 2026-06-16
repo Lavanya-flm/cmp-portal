@@ -28,13 +28,14 @@ const trainerUpdateSchema = Joi.object({
 });
 
 const batchLinksSchema = Joi.object({
-  syllabusLink: Joi.string().uri().max(500).optional().allow('', null),
-  projectsLink: Joi.string().uri().max(500).optional().allow('', null),
+  syllabusLink:         Joi.string().uri().max(500).optional().allow('', null),
+  projectsLink:         Joi.string().uri().max(500).optional().allow('', null),
   trainerDemoRecording: Joi.string().uri().max(500).optional().allow('', null),
-  liveDemoRecording1: Joi.string().uri().max(500).optional().allow('', null),
-  liveDemoRecording2: Joi.string().uri().max(500).optional().allow('', null),
-  paymentLink: Joi.string().uri().max(500).optional().allow('', null),
-  whatsappGroupLink: Joi.string().uri().max(500).optional().allow('', null),
+  liveDemoRecording1:   Joi.string().uri().max(500).optional().allow('', null),
+  liveDemoRecording2:   Joi.string().uri().max(500).optional().allow('', null),
+  paymentLink:          Joi.string().uri().max(500).optional().allow('', null),
+  whatsappGroupLink:    Joi.string().uri().max(500).optional().allow('', null),
+  communityLink:        Joi.string().uri().max(500).optional().allow('', null),
 });
 
 // ─── Create Batch ─────────────────────────────────────────────────────────────
@@ -45,9 +46,13 @@ export const createBatchSchema = Joi.object({
     'number.min': 'Batch number must be at least 1',
     'any.required': 'Batch number is required',
   }),
+  batchMonthYear: Joi.string().trim().max(100).optional().allow('', null),
   batchName: Joi.string().trim().min(2).max(150).required().messages({
     'string.empty': 'Batch name is required',
     'any.required': 'Batch name is required',
+  }),
+  status: Joi.string().valid('Upcoming', 'Live', 'Completed').default('Upcoming').messages({
+    'any.only': 'Status must be one of: Upcoming, Live, Completed',
   }),
   startDate: Joi.string()
     .isoDate()
@@ -82,7 +87,11 @@ export const createBatchSchema = Joi.object({
 // ─── Update Batch ─────────────────────────────────────────────────────────────
 
 export const updateBatchSchema = Joi.object({
-  batchName: Joi.string().trim().min(2).max(150).optional(),
+  batchName:      Joi.string().trim().min(2).max(150).optional(),
+  batchMonthYear: Joi.string().trim().max(100).optional().allow('', null),
+  status: Joi.string().valid('Upcoming', 'Live', 'Completed').optional().messages({
+    'any.only': 'Status must be one of: Upcoming, Live, Completed',
+  }),
   startDate: Joi.string().isoDate().optional().allow(null).messages({
     'string.isoDate': 'Start date must be a valid ISO date (YYYY-MM-DD)',
   }),

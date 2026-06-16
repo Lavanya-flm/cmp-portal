@@ -2,17 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Base styles ─────────────────────────────────────────────────────────── */
+/* ─── Base styles ──────────────────────────────────────────────────────────── */
 
 @layer base {
   html {
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 m-0;
+    @apply bg-[#FFF9F1] text-gray-900 m-0;
   }
 
   #root {
@@ -30,14 +31,35 @@
   }
 }
 
-/* ─── Custom utilities ────────────────────────────────────────────────────── */
+/* ─── Custom utilities ─────────────────────────────────────────────────────── */
 
 @layer utilities {
+  /* Toast entry animation — referenced as 'animate-in slide-in-from-bottom-4' */
+  .animate-in {
+    animation-fill-mode: both;
+  }
+  .slide-in-from-bottom-4 {
+    animation-name: slideInFromBottom;
+    animation-duration: 0.2s;
+    animation-timing-function: ease-out;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
   }
 
   .scrollbar-thumb-gray {
     scrollbar-color: theme('colors.gray.300') transparent;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

@@ -34,34 +34,36 @@ function toTrainerResponse(t: Trainer): TrainerResponse {
 
 function toBatchLinksResponse(bl: BatchLinks): BatchLinksResponse {
   return {
-    id: bl.id,
-    syllabusLink: bl.syllabusLink,
-    projectsLink: bl.projectsLink,
+    id:                   bl.id,
+    syllabusLink:         bl.syllabusLink,
+    projectsLink:         bl.projectsLink,
     trainerDemoRecording: bl.trainerDemoRecording,
-    liveDemoRecording1: bl.liveDemoRecording1,
-    liveDemoRecording2: bl.liveDemoRecording2,
-    paymentLink: bl.paymentLink,
-    whatsappGroupLink: bl.whatsappGroupLink,
-    createdAt: bl.createdAt,
-    updatedAt: bl.updatedAt,
+    liveDemoRecording1:   bl.liveDemoRecording1,
+    liveDemoRecording2:   bl.liveDemoRecording2,
+    paymentLink:          bl.paymentLink,
+    whatsappGroupLink:    bl.whatsappGroupLink,
+    communityLink:        bl.communityLink,
+    createdAt:            bl.createdAt,
+    updatedAt:            bl.updatedAt,
   };
 }
 
 function toBatchResponse(b: BatchWithRelations): BatchResponse {
   return {
-    id: b.id,
-    courseId: b.courseId,
-    batchNumber: b.batchNumber,
-    batchName: b.batchName,
-    startDate: b.startDate,
-    endDate: b.endDate,
-    // Prisma returns Decimal for DECIMAL columns — convert to plain number for JSON
+    id:             b.id,
+    courseId:       b.courseId,
+    batchNumber:    b.batchNumber,
+    batchMonthYear: b.batchMonthYear ?? null,
+    batchName:      b.batchName,
+    status:         b.status,
+    startDate:      b.startDate,
+    endDate:        b.endDate,
     price: b.price instanceof Decimal ? b.price.toNumber() : Number(b.price),
-    supportEmail: b.supportEmail,
-    trainer: b.trainer ? toTrainerResponse(b.trainer) : null,
-    batchLinks: b.batchLinks ? toBatchLinksResponse(b.batchLinks) : null,
-    createdAt: b.createdAt,
-    updatedAt: b.updatedAt,
+    supportEmail:   b.supportEmail,
+    trainer:     b.trainer     ? toTrainerResponse(b.trainer)         : null,
+    batchLinks:  b.batchLinks  ? toBatchLinksResponse(b.batchLinks)   : null,
+    createdAt:   b.createdAt,
+    updatedAt:   b.updatedAt,
   };
 }
 

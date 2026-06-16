@@ -1,3 +1,5 @@
-export * from './ui/Button';
-export * from './ui/Input';
-export * from './ui/Toast';
+// ── UI primitives
+export * from './ui';
+
+// ── Auth components
+export * from './auth';
