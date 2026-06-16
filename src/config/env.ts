@@ -38,4 +38,28 @@ export const env = {
     level: process.env.LOG_LEVEL ?? 'debug',
     dir: process.env.LOG_DIR ?? 'logs',
   },
+
+  email: {
+    resendApiKey: process.env.RESEND_API_KEY ?? '',
+    from: process.env.EMAIL_FROM ?? 'CMP Portal <noreply@cmp.io>',
+    frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+    /** How long password reset tokens are valid (minutes). Default: 30 */
+    passwordResetExpiresMins: parseInt(process.env.PASSWORD_RESET_EXPIRES_MINUTES ?? '30', 10),
+  },
 } as const;
+
+// ─── Startup validation — warn if email is not configured ────────────────────
+// Runs at module load time so the warning appears in logs on every startup.
+
+(function warnIfEmailDisabled() {
+  const key = process.env.RESEND_API_KEY;
+  const isPlaceholder = !key || key === 're_your_api_key_here' || key === 'RESEND_NOT_CONFIGURED';
+  if (isPlaceholder) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '⚠️  [Email] Resend email service disabled. ' +
+      'Password reset emails will not be delivered. ' +
+      'Set RESEND_API_KEY in .env to enable.',
+    );
+  }
+})();

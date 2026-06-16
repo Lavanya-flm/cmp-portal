@@ -12,6 +12,14 @@ export const createCourseSchema = Joi.object({
   description: Joi.string().trim().max(2000).optional().allow('', null).messages({
     'string.max': 'Description must not exceed 2000 characters',
   }),
+  status: Joi.string().valid('Upcoming', 'Live', 'Completed').default('Upcoming').messages({
+    'any.only': 'Status must be one of: Upcoming, Live, Completed',
+  }),
+  // bannerImage is a base64 data URL or remote URL — stored as text, no length limit enforced here
+  bannerImage: Joi.string().optional().allow('', null),
+  courseOffers: Joi.string().trim().max(5000).optional().allow('', null).messages({
+    'string.max': 'Course offers must not exceed 5000 characters',
+  }),
 });
 
 // ─── Update Course ────────────────────────────────────────────────────────────
@@ -24,6 +32,13 @@ export const updateCourseSchema = Joi.object({
   }),
   description: Joi.string().trim().max(2000).optional().allow('', null).messages({
     'string.max': 'Description must not exceed 2000 characters',
+  }),
+  status: Joi.string().valid('Upcoming', 'Live', 'Completed').optional().messages({
+    'any.only': 'Status must be one of: Upcoming, Live, Completed',
+  }),
+  bannerImage: Joi.string().optional().allow('', null),
+  courseOffers: Joi.string().trim().max(5000).optional().allow('', null).messages({
+    'string.max': 'Course offers must not exceed 5000 characters',
   }),
 }).min(1).messages({
   'object.min': 'At least one field must be provided for update',

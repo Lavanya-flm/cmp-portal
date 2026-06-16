@@ -3,7 +3,13 @@ import { authController } from './auth.controller';
 import { validate } from '../../core/middleware/validate.middleware';
 import { authenticate } from '../../core/middleware/auth.middleware';
 import { authRateLimiter } from '../../core/middleware/rateLimiter.middleware';
-import { loginSchema, refreshTokenSchema } from './auth.validation';
+import {
+  loginSchema,
+  refreshTokenSchema,
+  registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from './auth.validation';
 
 const router = Router();
 
@@ -11,18 +17,58 @@ const router = Router();
  * @swagger
  * tags:
  *   name: Auth
- *   description: Authentication — login, token refresh, logout
+ *   description: Authentication — register, login, forgot/reset password, token refresh, logout
  */
 
 /**
  * @swagger
  * components:
  *   schemas:
+ *     RegisterRequest:
+ *       type: object
+ *       required: [firstName, lastName, email, password]
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           example: John
+ *         lastName:
+ *           type: string
+ *           example: Doe
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: Min 8 chars, uppercase, lowercase, number, special char
+ *           example: Password@123
+ *
+ *     ForgotPasswordRequest:
+ *       type: object
+ *       required: [email]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: john@example.com
+ *
+ *     ResetPasswordRequest:
+ *       type: object
+ *       required: [token, newPassword]
+ *       properties:
+ *         token:
+ *           type: string
+ *           example: a3f2b1c4d5e6...
+ *         newPassword:
+ *           type: string
+ *           format: password
+ *           description: Min 8 chars, uppercase, lowercase, number, special char
+ *           example: NewPassword@456
+ *
  *     LoginRequest:
  *       type: object
- *       required:
- *         - email
- *         - password
+ *       required: [email, password]
  *       properties:
  *         email:
  *           type: string
@@ -35,8 +81,7 @@ const router = Router();
  *
  *     RefreshTokenRequest:
  *       type: object
- *       required:
- *         - refreshToken
+ *       required: [refreshToken]
  *       properties:
  *         refreshToken:
  *           type: string
@@ -48,7 +93,6 @@ const router = Router();
  *         id:
  *           type: string
  *           format: uuid
- *           example: "550e8400-e29b-41d4-a716-446655440000"
  *         email:
  *           type: string
  *           format: email
@@ -62,13 +106,11 @@ const router = Router();
  *         role:
  *           type: string
  *           enum: [SUPER_ADMIN, SUB_ADMIN, USER]
- *           example: SUB_ADMIN
+ *           example: USER
  *         isActive:
  *           type: boolean
- *           example: true
  *         isEmailVerified:
  *           type: boolean
- *           example: true
  *         lastLoginAt:
  *           type: string
  *           format: date-time
@@ -91,12 +133,8 @@ const router = Router();
  *           properties:
  *             accessToken:
  *               type: string
- *               description: JWT access token (short-lived, use in Authorization header)
- *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *             refreshToken:
  *               type: string
- *               description: JWT refresh token (long-lived, use to rotate access token)
- *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *             user:
  *               $ref: '#/components/schemas/AuthUser'
  *
@@ -117,13 +155,62 @@ const router = Router();
  *           properties:
  *             accessToken:
  *               type: string
- *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *             refreshToken:
  *               type: string
- *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
-// ─── Public routes (no auth required) ────────────────────────────────────────
+// ─── Registration ─────────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Create a new user account
+ *     description: |
+ *       Registers a new user account with role `USER`.
+ *       After success, navigate to `/login` to sign in.
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *           example:
+ *             firstName: John
+ *             lastName: Doe
+ *             email: john@example.com
+ *             password: Password@123
+ *     responses:
+ *       201:
+ *         description: Account created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/AuthUser'
+ *       409:
+ *         description: Email already in use
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ *       429:
+ *         description: Too many requests
+ */
+router.post('/register', authRateLimiter, validate(registerSchema), authController.register);
+
+// ─── Login ────────────────────────────────────────────────────────────────────
 
 /**
  * @swagger
@@ -131,13 +218,12 @@ const router = Router();
  *   post:
  *     summary: Login with email and password
  *     description: |
- *       Authenticates a user and returns an access token + refresh token.
+ *       Authenticates a user and returns an access + refresh token pair.
  *
  *       **How to use the token in Swagger:**
  *       1. Call this endpoint and copy the `accessToken` from the response.
  *       2. Click the **Authorize** button (🔒) at the top of this page.
  *       3. Paste the token into the **bearerAuth** field and click **Authorize**.
- *       4. All protected endpoints will now send the token automatically.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -159,7 +245,7 @@ const router = Router();
  *                 password: SuperAdmin@123
  *     responses:
  *       200:
- *         description: Login successful — copy `data.accessToken` and use the Authorize button
+ *         description: Login successful
  *         content:
  *           application/json:
  *             schema:
@@ -174,22 +260,102 @@ const router = Router();
  *         $ref: '#/components/responses/ValidationError'
  *       429:
  *         description: Too many login attempts
+ */
+router.post('/login', authRateLimiter, validate(loginSchema), authController.login);
+
+// ─── Forgot password ──────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset token
+ *     description: |
+ *       Generates a password reset token for the given email.
+ *       Always returns the same generic message regardless of whether
+ *       the email exists — prevents user enumeration.
+ *
+ *       In **development mode** the reset token is returned in the response body.
+ *       In **production** the token would be sent via email only.
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *           example:
+ *             email: john@example.com
+ *     responses:
+ *       200:
+ *         description: Generic success message (token in body only in development)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         message:
+ *                           type: string
+ *                         resetToken:
+ *                           type: string
+ *                           description: Only present in development mode
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+router.post('/forgot-password', authRateLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
+
+// ─── Reset password ───────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password using a reset token
+ *     description: |
+ *       Validates the reset token, updates the password, and revokes all
+ *       existing sessions and refresh tokens. The user must log in again.
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResetPasswordRequest'
+ *           example:
+ *             token: a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b
+ *             newPassword: NewPassword@456
+ *     responses:
+ *       200:
+ *         description: Password reset successfully — user must log in again
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Token is invalid or expired
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
  */
-router.post('/login', authRateLimiter, validate(loginSchema), authController.login);
+router.post('/reset-password', authRateLimiter, validate(resetPasswordSchema), authController.resetPassword);
+
+// ─── Refresh ──────────────────────────────────────────────────────────────────
 
 /**
  * @swagger
  * /auth/refresh:
  *   post:
  *     summary: Rotate tokens using a refresh token
- *     description: |
- *       Issues a new access + refresh token pair. The submitted refresh token is
- *       immediately invalidated (one-time use). Store the new refresh token for
- *       the next rotation.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -206,7 +372,7 @@ router.post('/login', authRateLimiter, validate(loginSchema), authController.log
  *             schema:
  *               $ref: '#/components/schemas/RefreshResponse'
  *       401:
- *         description: Refresh token is invalid, expired, or already used
+ *         description: Refresh token invalid, expired, or already used
  *         content:
  *           application/json:
  *             schema:
@@ -216,14 +382,13 @@ router.post('/login', authRateLimiter, validate(loginSchema), authController.log
  */
 router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), authController.refresh);
 
-// ─── Protected routes (valid access token required) ───────────────────────────
+// ─── Protected ────────────────────────────────────────────────────────────────
 
 /**
  * @swagger
  * /auth/me:
  *   get:
  *     summary: Get current authenticated user
- *     description: Returns the user profile decoded from the access token.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -249,7 +414,6 @@ router.get('/me', authenticate, authController.me);
  * /auth/logout:
  *   post:
  *     summary: Logout from current device
- *     description: Revokes the current session and all refresh tokens for this user.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -270,7 +434,6 @@ router.post('/logout', authenticate, authController.logout);
  * /auth/logout-all:
  *   post:
  *     summary: Logout from all devices
- *     description: Revokes every active session and refresh token for the authenticated user.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []

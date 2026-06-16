@@ -4,9 +4,6 @@ import { prisma } from '../../config/database';
 export class AuthRepository {
   // ─── User queries ──────────────────────────────────────────────────────────
 
-  /**
-   * Find an active, non-deleted user by email.
-   */
   async findUserByEmail(email: string): Promise<User | null> {
     return prisma.user.findFirst({
       where: {
@@ -17,18 +14,19 @@ export class AuthRepository {
     });
   }
 
-  /**
-   * Find a user by primary key — used for token refresh lookups.
-   */
+  /** Find user by email without active/deleted filter — needed for forgot-password */
+  async findUserByEmailAny(email: string): Promise<User | null> {
+    return prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' }, deletedAt: null },
+    });
+  }
+
   async findUserById(id: string): Promise<User | null> {
     return prisma.user.findFirst({
       where: { id, isActive: true, deletedAt: null },
     });
   }
 
-  /**
-   * Stamp lastLoginAt after a successful login.
-   */
   async updateLastLogin(userId: string): Promise<void> {
     await prisma.user.update({
       where: { id: userId },
@@ -36,69 +34,95 @@ export class AuthRepository {
     });
   }
 
-  // ─── Refresh token CRUD ────────────────────────────────────────────────────
+  // ─── Registration ──────────────────────────────────────────────────────────
 
-  /**
-   * Persist a refresh token tied to a user.
-   */
-  async createRefreshToken(
-    userId: string,
-    token: string,
-    expiresAt: Date,
-  ): Promise<Token> {
-    return prisma.token.create({
+  async createUser(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    passwordHash: string;
+  }): Promise<User> {
+    return prisma.user.create({
       data: {
-        userId,
-        type: TokenType.REFRESH,
-        token,
-        expiresAt,
+        firstName: data.firstName,
+        lastName:  data.lastName,
+        email:     data.email,
+        passwordHash: data.passwordHash,
+        role:      'USER',
+        isActive:  true,
+        isEmailVerified: true, // MVP: skip email verification
       },
     });
   }
 
-  /**
-   * Look up a refresh token record — must be unused and not expired.
-   */
+  /** Find an existing active user by email — used in duplicate-email check */
+  async findActiveUserByEmail(email: string): Promise<User | null> {
+    return prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' }, deletedAt: null },
+    });
+  }
+
+  // ─── Refresh token CRUD ────────────────────────────────────────────────────
+
+  async createRefreshToken(userId: string, token: string, expiresAt: Date): Promise<Token> {
+    return prisma.token.create({
+      data: { userId, type: TokenType.REFRESH, token, expiresAt },
+    });
+  }
+
   async findRefreshToken(token: string): Promise<Token | null> {
+    return prisma.token.findFirst({
+      where: { token, type: TokenType.REFRESH, usedAt: null, expiresAt: { gt: new Date() } },
+    });
+  }
+
+  async markTokenUsed(tokenId: string): Promise<void> {
+    await prisma.token.update({ where: { id: tokenId }, data: { usedAt: new Date() } });
+  }
+
+  async revokeAllRefreshTokens(userId: string): Promise<void> {
+    await prisma.token.updateMany({
+      where: { userId, type: TokenType.REFRESH, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+  }
+
+  // ─── Password reset token CRUD ─────────────────────────────────────────────
+
+  /** Store a password-reset token (30-minute expiry). */
+  async createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<Token> {
+    // Invalidate any previous unused reset tokens for this user
+    await prisma.token.updateMany({
+      where: { userId, type: TokenType.PASSWORD_RESET, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    return prisma.token.create({
+      data: { userId, type: TokenType.PASSWORD_RESET, token, expiresAt },
+    });
+  }
+
+  /** Find a valid, unused, non-expired password-reset token. */
+  async findPasswordResetToken(token: string): Promise<Token | null> {
     return prisma.token.findFirst({
       where: {
         token,
-        type: TokenType.REFRESH,
+        type: TokenType.PASSWORD_RESET,
         usedAt: null,
         expiresAt: { gt: new Date() },
       },
     });
   }
 
-  /**
-   * Mark a refresh token as consumed (one-time use).
-   */
-  async markTokenUsed(tokenId: string): Promise<void> {
-    await prisma.token.update({
-      where: { id: tokenId },
-      data: { usedAt: new Date() },
-    });
-  }
-
-  /**
-   * Revoke all active refresh tokens for a user (used on logout).
-   */
-  async revokeAllRefreshTokens(userId: string): Promise<void> {
-    await prisma.token.updateMany({
-      where: {
-        userId,
-        type: TokenType.REFRESH,
-        usedAt: null,
-      },
-      data: { usedAt: new Date() },
+  /** Update the user's password hash. */
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
     });
   }
 
   // ─── Session CRUD ──────────────────────────────────────────────────────────
 
-  /**
-   * Create a new session record on login.
-   */
   async createSession(
     userId: string,
     sessionId: string,
@@ -108,9 +132,7 @@ export class AuthRepository {
   ): Promise<Session> {
     return prisma.session.create({
       data: {
-        userId,
-        sessionId,
-        expiresAt,
+        userId, sessionId, expiresAt,
         userAgent: userAgent ?? null,
         ipAddress: ipAddress ?? null,
         isActive: true,
@@ -118,23 +140,12 @@ export class AuthRepository {
     });
   }
 
-  /**
-   * Find a session by its JWT sessionId claim.
-   */
   async findSession(sessionId: string): Promise<Session | null> {
     return prisma.session.findFirst({
-      where: {
-        sessionId,
-        isActive: true,
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
-      },
+      where: { sessionId, isActive: true, revokedAt: null, expiresAt: { gt: new Date() } },
     });
   }
 
-  /**
-   * Revoke a single session (logout from current device).
-   */
   async revokeSession(sessionId: string): Promise<void> {
     await prisma.session.updateMany({
       where: { sessionId },
@@ -142,9 +153,6 @@ export class AuthRepository {
     });
   }
 
-  /**
-   * Revoke all sessions for a user (logout from all devices).
-   */
   async revokeAllSessions(userId: string): Promise<void> {
     await prisma.session.updateMany({
       where: { userId, isActive: true },

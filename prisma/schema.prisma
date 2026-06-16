@@ -92,11 +92,14 @@ model Session {
 // ─── Course ───────────────────────────────────────────────────────────────────
 
 model Course {
-  id          String   @id @default(uuid())
-  name        String
-  description String?  @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  name         String
+  description  String?  @db.Text
+  status       String?  @default("Upcoming")
+  bannerImage  String?  @db.Text @map("banner_image")
+  courseOffers String?  @db.Text @map("course_offers")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
   batches Batch[]
@@ -108,16 +111,18 @@ model Course {
 // ─── Batch ────────────────────────────────────────────────────────────────────
 
 model Batch {
-  id           String    @id @default(uuid())
-  courseId     String    @map("course_id")
-  batchNumber  Int       @map("batch_number")
-  batchName    String    @map("batch_name")
-  startDate    DateTime  @map("start_date") @db.Date
-  endDate      DateTime? @map("end_date") @db.Date
-  price        Decimal   @db.Decimal(10, 2)
-  supportEmail String    @map("support_email")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  courseId       String    @map("course_id")
+  batchNumber    Int       @map("batch_number")
+  batchMonthYear String?   @map("batch_month_year")
+  batchName      String    @map("batch_name")
+  status         String    @default("Upcoming") @map("status")
+  startDate      DateTime  @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  price          Decimal   @db.Decimal(10, 2)
+  supportEmail   String    @map("support_email")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   // Relations
   course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -163,6 +168,7 @@ model BatchLinks {
   liveDemoRecording2   String?  @map("live_demo_recording_2")
   paymentLink          String?  @map("payment_link")
   whatsappGroupLink    String?  @map("whatsapp_group_link")
+  communityLink        String?  @map("community_link")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 

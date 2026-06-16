@@ -11,6 +11,22 @@ export interface RefreshTokenDto {
   refreshToken: string;
 }
 
+export interface RegisterDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  newPassword: string;
+}
+
 // ─── Response DTOs ────────────────────────────────────────────────────────────
 
 export interface AuthUserResponse {
@@ -33,6 +49,14 @@ export interface LoginResponse {
 export interface RefreshResponse {
   accessToken: string;
   refreshToken: string;
+}
+
+export interface RegisterResponse {
+  user: AuthUserResponse;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
 }
 
 // ─── Internal context ─────────────────────────────────────────────────────────

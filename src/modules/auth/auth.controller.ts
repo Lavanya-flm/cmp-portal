@@ -1,22 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
 import { sendSuccess } from '../../core/utils/response.util';
-import { LoginDto, RefreshTokenDto } from './auth.types';
+import { LoginDto, RefreshTokenDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto } from './auth.types';
 import { assertAuthenticated } from '../../core/middleware/auth.middleware';
 
 export class AuthController {
-  /**
-   * POST /auth/login
-   */
+
+  /** POST /auth/register */
+  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const dto = req.body as RegisterDto;
+      const result = await authService.register(dto);
+      sendSuccess(res, result, 'Account created successfully. Please login.', 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /auth/login */
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const dto = req.body as LoginDto;
-
       const ctx = {
         userAgent: req.headers['user-agent'],
         ipAddress: req.ip ?? req.socket.remoteAddress,
       };
-
       const result = await authService.login(dto, ctx);
       sendSuccess(res, result, 'Login successful');
     } catch (error) {
@@ -24,9 +32,29 @@ export class AuthController {
     }
   }
 
-  /**
-   * POST /auth/refresh
-   */
+  /** POST /auth/forgot-password */
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const dto = req.body as ForgotPasswordDto;
+      const result = await authService.forgotPassword(dto);
+      sendSuccess(res, result, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /auth/reset-password */
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const dto = req.body as ResetPasswordDto;
+      await authService.resetPassword(dto);
+      sendSuccess(res, null, 'Password reset successfully. Please login.');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /auth/refresh */
   async refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const dto = req.body as RefreshTokenDto;
@@ -37,10 +65,7 @@ export class AuthController {
     }
   }
 
-  /**
-   * POST /auth/logout
-   * Requires a valid access token.
-   */
+  /** POST /auth/logout */
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       assertAuthenticated(req);
@@ -51,10 +76,7 @@ export class AuthController {
     }
   }
 
-  /**
-   * POST /auth/logout-all
-   * Revokes all sessions across all devices.
-   */
+  /** POST /auth/logout-all */
   async logoutAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       assertAuthenticated(req);
@@ -65,10 +87,7 @@ export class AuthController {
     }
   }
 
-  /**
-   * GET /auth/me
-   * Returns the currently authenticated user's profile from the token.
-   */
+  /** GET /auth/me */
   async me(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       assertAuthenticated(req);
@@ -81,9 +100,12 @@ export class AuthController {
 
 const controller = new AuthController();
 export const authController = {
-  login: controller.login.bind(controller),
-  refresh: controller.refresh.bind(controller),
-  logout: controller.logout.bind(controller),
-  logoutAll: controller.logoutAll.bind(controller),
-  me: controller.me.bind(controller),
+  register:       controller.register.bind(controller),
+  login:          controller.login.bind(controller),
+  forgotPassword: controller.forgotPassword.bind(controller),
+  resetPassword:  controller.resetPassword.bind(controller),
+  refresh:        controller.refresh.bind(controller),
+  logout:         controller.logout.bind(controller),
+  logoutAll:      controller.logoutAll.bind(controller),
+  me:             controller.me.bind(controller),
 };

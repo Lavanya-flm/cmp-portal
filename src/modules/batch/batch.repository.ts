@@ -29,12 +29,14 @@ export class BatchRepository {
       const batch = await tx.batch.create({
         data: {
           courseId,
-          batchNumber: dto.batchNumber,
-          batchName: dto.batchName,
-          startDate: new Date(dto.startDate),
-          endDate: dto.endDate ? new Date(dto.endDate) : null,
-          price: new Prisma.Decimal(dto.price),
-          supportEmail: dto.supportEmail,
+          batchNumber:    dto.batchNumber,
+          batchMonthYear: dto.batchMonthYear ?? null,
+          batchName:      dto.batchName,
+          status:         dto.status ?? 'Upcoming',
+          startDate:      new Date(dto.startDate),
+          endDate:        dto.endDate ? new Date(dto.endDate) : null,
+          price:          new Prisma.Decimal(dto.price),
+          supportEmail:   dto.supportEmail,
         },
       });
 
@@ -61,6 +63,7 @@ export class BatchRepository {
           liveDemoRecording2: dto.batchLinks?.liveDemoRecording2 ?? null,
           paymentLink: dto.batchLinks?.paymentLink ?? null,
           whatsappGroupLink: dto.batchLinks?.whatsappGroupLink ?? null,
+          communityLink: dto.batchLinks?.communityLink ?? null,
         },
       });
 
@@ -140,13 +143,13 @@ export class BatchRepository {
       await tx.batch.update({
         where: { id },
         data: {
-          ...(dto.batchName !== undefined && { batchName: dto.batchName }),
-          ...(dto.startDate !== undefined && { startDate: new Date(dto.startDate) }),
-          ...(dto.endDate !== undefined && {
-            endDate: dto.endDate ? new Date(dto.endDate) : null,
-          }),
-          ...(dto.price !== undefined && { price: new Prisma.Decimal(dto.price) }),
-          ...(dto.supportEmail !== undefined && { supportEmail: dto.supportEmail }),
+          ...(dto.batchName      !== undefined && { batchName:      dto.batchName }),
+          ...(dto.batchMonthYear !== undefined && { batchMonthYear: dto.batchMonthYear }),
+          ...(dto.status         !== undefined && { status:         dto.status }),
+          ...(dto.startDate      !== undefined && { startDate:      new Date(dto.startDate) }),
+          ...(dto.endDate        !== undefined && { endDate: dto.endDate ? new Date(dto.endDate) : null }),
+          ...(dto.price          !== undefined && { price:          new Prisma.Decimal(dto.price) }),
+          ...(dto.supportEmail   !== undefined && { supportEmail:   dto.supportEmail }),
         },
       });
 
@@ -171,27 +174,14 @@ export class BatchRepository {
         await tx.batchLinks.update({
           where: { batchId: id },
           data: {
-            ...(dto.batchLinks.syllabusLink !== undefined && {
-              syllabusLink: dto.batchLinks.syllabusLink,
-            }),
-            ...(dto.batchLinks.projectsLink !== undefined && {
-              projectsLink: dto.batchLinks.projectsLink,
-            }),
-            ...(dto.batchLinks.trainerDemoRecording !== undefined && {
-              trainerDemoRecording: dto.batchLinks.trainerDemoRecording,
-            }),
-            ...(dto.batchLinks.liveDemoRecording1 !== undefined && {
-              liveDemoRecording1: dto.batchLinks.liveDemoRecording1,
-            }),
-            ...(dto.batchLinks.liveDemoRecording2 !== undefined && {
-              liveDemoRecording2: dto.batchLinks.liveDemoRecording2,
-            }),
-            ...(dto.batchLinks.paymentLink !== undefined && {
-              paymentLink: dto.batchLinks.paymentLink,
-            }),
-            ...(dto.batchLinks.whatsappGroupLink !== undefined && {
-              whatsappGroupLink: dto.batchLinks.whatsappGroupLink,
-            }),
+            ...(dto.batchLinks.syllabusLink         !== undefined && { syllabusLink:         dto.batchLinks.syllabusLink }),
+            ...(dto.batchLinks.projectsLink         !== undefined && { projectsLink:         dto.batchLinks.projectsLink }),
+            ...(dto.batchLinks.trainerDemoRecording !== undefined && { trainerDemoRecording: dto.batchLinks.trainerDemoRecording }),
+            ...(dto.batchLinks.liveDemoRecording1   !== undefined && { liveDemoRecording1:   dto.batchLinks.liveDemoRecording1 }),
+            ...(dto.batchLinks.liveDemoRecording2   !== undefined && { liveDemoRecording2:   dto.batchLinks.liveDemoRecording2 }),
+            ...(dto.batchLinks.paymentLink          !== undefined && { paymentLink:          dto.batchLinks.paymentLink }),
+            ...(dto.batchLinks.whatsappGroupLink    !== undefined && { whatsappGroupLink:    dto.batchLinks.whatsappGroupLink }),
+            ...(dto.batchLinks.communityLink        !== undefined && { communityLink:        dto.batchLinks.communityLink }),
           },
         });
       }

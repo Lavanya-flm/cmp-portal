@@ -17,6 +17,9 @@ export class CourseRepository {
       data: {
         name: dto.name,
         description: dto.description ?? null,
+        status: dto.status ?? 'Upcoming',
+        bannerImage: dto.bannerImage ?? null,
+        courseOffers: dto.courseOffers ?? null,
       },
     });
   }
@@ -83,8 +86,12 @@ export class CourseRepository {
     return prisma.course.update({
       where: { id },
       data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.name        !== undefined && { name:         dto.name }),
+        ...(dto.description !== undefined && { description:  dto.description }),
+        ...(dto.status      !== undefined && { status:       dto.status }),
+        // Allow explicit null to clear the field
+        ...(dto.bannerImage  !== undefined && { bannerImage:  dto.bannerImage }),
+        ...(dto.courseOffers !== undefined && { courseOffers: dto.courseOffers }),
       },
     });
   }

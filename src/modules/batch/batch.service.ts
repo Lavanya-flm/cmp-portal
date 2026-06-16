@@ -42,6 +42,7 @@ function toBatchLinksResponse(bl: BatchLinks): BatchLinksResponse {
     liveDemoRecording2: bl.liveDemoRecording2,
     paymentLink: bl.paymentLink,
     whatsappGroupLink: bl.whatsappGroupLink,
+    communityLink: bl.communityLink,
     createdAt: bl.createdAt,
     updatedAt: bl.updatedAt,
   };
@@ -52,10 +53,11 @@ function toBatchResponse(b: BatchWithRelations): BatchResponse {
     id: b.id,
     courseId: b.courseId,
     batchNumber: b.batchNumber,
+    batchMonthYear: b.batchMonthYear ?? null,
     batchName: b.batchName,
+    status: b.status,
     startDate: b.startDate,
     endDate: b.endDate,
-    // Prisma returns Decimal for DECIMAL columns — convert to plain number for JSON
     price: b.price instanceof Decimal ? b.price.toNumber() : Number(b.price),
     supportEmail: b.supportEmail,
     trainer: b.trainer ? toTrainerResponse(b.trainer) : null,

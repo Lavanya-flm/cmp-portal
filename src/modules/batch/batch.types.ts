@@ -40,6 +40,7 @@ export interface CreateBatchLinksDto {
   liveDemoRecording2?: string;
   paymentLink?: string;
   whatsappGroupLink?: string;
+  communityLink?: string;
 }
 
 export interface UpdateBatchLinksDto extends CreateBatchLinksDto {}
@@ -48,8 +49,10 @@ export interface UpdateBatchLinksDto extends CreateBatchLinksDto {}
 
 export interface CreateBatchDto {
   batchNumber: number;
+  batchMonthYear?: string;
   batchName: string;
-  startDate: string;        // ISO date string — coerced to Date in service
+  status?: string;
+  startDate: string;
   endDate?: string;
   price: number;
   supportEmail: string;
@@ -59,6 +62,8 @@ export interface CreateBatchDto {
 
 export interface UpdateBatchDto {
   batchName?: string;
+  batchMonthYear?: string;
+  status?: string;
   startDate?: string;
   endDate?: string;
   price?: number;
@@ -96,6 +101,7 @@ export interface BatchLinksResponse {
   liveDemoRecording2: string | null;
   paymentLink: string | null;
   whatsappGroupLink: string | null;
+  communityLink: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -104,7 +110,9 @@ export interface BatchResponse {
   id: string;
   courseId: string;
   batchNumber: number;
+  batchMonthYear: string | null;
   batchName: string;
+  status: string;
   startDate: Date;
   endDate: Date | null;
   price: number;
