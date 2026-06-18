@@ -11,12 +11,11 @@ export const courseSchema = z.object({
     .max(2000, 'Description must not exceed 2000 characters')
     .optional()
     .or(z.literal('')),
-  courseOffers: z
+  whatYouWillLearn: z
     .string()
-    .max(3000, 'Course offers must not exceed 3000 characters')
+    .max(3000, 'What You Will Learn must not exceed 3000 characters')
     .optional()
     .or(z.literal('')),
-  /** Base64 data URL or remote URL of the uploaded banner */
   bannerImage: z.string().optional().nullable(),
 });
 

@@ -23,7 +23,6 @@ import type { Batch } from '../types';
 
 type Tab = 'overview' | 'batches';
 
-// ── Tab button ────────────────────────────────────────────────────────────────
 function TabBtn({ active, onClick, children }: {
   active: boolean; onClick: () => void; children: React.ReactNode;
 }) {
@@ -33,9 +32,7 @@ function TabBtn({ active, onClick, children }: {
       onClick={onClick}
       className={[
         'pb-3 px-1 mr-8 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap',
-        active
-          ? 'border-amber-500 text-amber-600'
-          : 'border-transparent text-gray-500 hover:text-gray-800',
+        active ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500 hover:text-gray-800',
       ].join(' ')}
     >
       {children}
@@ -43,10 +40,7 @@ function TabBtn({ active, onClick, children }: {
   );
 }
 
-// ── Top stat card — medium size, sits below the page header ─────────────────
-function TopStatCard({
-  icon, label, value, accent = false,
-}: {
+function TopStatCard({ icon, label, value, accent = false }: {
   icon: React.ReactNode; label: string; value: string | number; accent?: boolean;
 }) {
   return (
@@ -62,7 +56,6 @@ function TopStatCard({
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
 export function CourseDetailPage() {
   const { id: courseId = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -73,20 +66,13 @@ export function CourseDetailPage() {
   const isSuperAdmin = useIsSuperAdmin();
   const isAdmin = useIsAdmin();
 
-  const {
-    data: course,
-    isLoading: courseLoading,
-    isError: courseError,
-    error: courseErr,
-    refetch,
-  } = useCourse(courseId);
+  const { data: course, isLoading: courseLoading, isError: courseError, error: courseErr, refetch } = useCourse(courseId);
   const { mutate: deleteCourse, isPending: isDeletingCourse } = useDeleteCourse();
   const { data: batchData, isLoading: batchLoading } = useBatches(courseId, { limit: 100 });
   const batches = batchData?.data ?? [];
   const { mutate: deleteBatch, isPending: isDeletingBatch } = useDeleteBatch(courseId);
   const { toasts, addToast, removeToast } = useToast();
 
-  // ── Batch stats — driven by stored batch.status ─────────────────────────────
   const liveBatches      = batches.filter((b) => b.status === 'Live').length;
   const upcomingBatches  = batches.filter((b) => b.status === 'Upcoming').length;
   const completedBatches = batches.filter((b) => b.status === 'Completed').length;
@@ -95,10 +81,7 @@ export function CourseDetailPage() {
   const handleDeleteCourse = () => {
     if (!course) return;
     deleteCourse(course.id, {
-      onSuccess: () => {
-        addToast(`"${course.name}" deleted.`, 'success');
-        setTimeout(() => navigate(ROUTES.COURSES), 600);
-      },
+      onSuccess: () => { addToast(`"${course.name}" deleted.`, 'success'); setTimeout(() => navigate(ROUTES.COURSES), 600); },
       onError: (err) => { addToast(getErrorMessage(err), 'error'); setShowDeleteCourse(false); },
     });
   };
@@ -117,35 +100,20 @@ export function CourseDetailPage() {
 
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-1.5 text-xs text-gray-500">
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.COURSES)}
-            className="font-medium hover:text-amber-600 transition-colors"
-          >
-            Courses
-          </button>
-          {course && (
-            <>
-              <ChevronRight size={12} className="text-gray-300" />
-              <span className="font-medium text-gray-700">{course.name}</span>
-            </>
-          )}
+          <button type="button" onClick={() => navigate(ROUTES.COURSES)} className="font-medium hover:text-amber-600 transition-colors">Courses</button>
+          {course && (<><ChevronRight size={12} className="text-gray-300" /><span className="font-medium text-gray-700">{course.name}</span></>)}
         </nav>
 
-        {/* Loading skeleton */}
+        {/* Loading */}
         {courseLoading && (
           <div className="animate-pulse space-y-5">
             <div className="h-8 w-1/3 rounded-lg bg-gray-200" />
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[...Array(4)].map((_, i) => <div key={i} className="h-28 rounded-2xl bg-gray-100" />)}
             </div>
-            <div className="h-10 w-40 rounded-lg bg-gray-100" />
             <div className="flex gap-5">
               <div className="h-72 w-[42%] rounded-2xl bg-gray-200" />
-              <div className="flex-1 space-y-4">
-                <div className="h-32 rounded-xl bg-gray-100" />
-                <div className="h-40 rounded-xl bg-gray-100" />
-              </div>
+              <div className="flex-1 space-y-4"><div className="h-32 rounded-xl bg-gray-100" /><div className="h-40 rounded-xl bg-gray-100" /></div>
             </div>
           </div>
         )}
@@ -154,13 +122,8 @@ export function CourseDetailPage() {
         {courseError && !courseLoading && (
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
             <AlertCircle size={28} className="text-red-400" />
-            <div>
-              <p className="font-semibold text-red-700">Failed to load course</p>
-              <p className="mt-1 text-sm text-red-500">{getErrorMessage(courseErr)}</p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => void refetch()}>
-              <RefreshCw size={13} /> Try again
-            </Button>
+            <div><p className="font-semibold text-red-700">Failed to load course</p><p className="mt-1 text-sm text-red-500">{getErrorMessage(courseErr)}</p></div>
+            <Button variant="secondary" size="sm" onClick={() => void refetch()}><RefreshCw size={13} /> Try again</Button>
           </div>
         )}
 
@@ -168,14 +131,12 @@ export function CourseDetailPage() {
         {!courseLoading && !courseError && course && (
           <div className="flex flex-col gap-6">
 
-            {/* 1 — Page header: name + description preview + actions */}
+            {/* Header */}
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">{course.name}</h1>
                 {course.description && (
-                  <p className="mt-1.5 max-w-2xl text-sm text-gray-500 leading-relaxed line-clamp-2">
-                    {course.description}
-                  </p>
+                  <p className="mt-1.5 max-w-2xl text-sm text-gray-500 leading-relaxed line-clamp-2">{course.description}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -192,7 +153,7 @@ export function CourseDetailPage() {
               </div>
             </div>
 
-            {/* 2 — Top statistics bar: 4 large prominent cards */}
+            {/* Stats bar */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <TopStatCard icon={<LayoutGrid size={18} />}  label="Total Batches"     value={totalBatches}     accent />
               <TopStatCard icon={<Activity size={18} />}    label="Live Batches"      value={liveBatches} />
@@ -200,139 +161,105 @@ export function CourseDetailPage() {
               <TopStatCard icon={<CheckCircle size={18} />} label="Completed Batches" value={completedBatches} />
             </div>
 
-            {/* 3 — Tabs */}
+            {/* Tabs */}
             <div className="border-b border-gray-200">
               <div className="flex">
-                <TabBtn active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
-                  Overview
-                </TabBtn>
+                <TabBtn active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>Overview</TabBtn>
                 <TabBtn active={activeTab === 'batches'} onClick={() => setActiveTab('batches')}>
                   Batches
                   {batches.length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-                      {batches.length}
-                    </span>
+                    <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{batches.length}</span>
                   )}
                 </TabBtn>
               </div>
             </div>
 
-            {/* 4 — Overview tab */}
+            {/* Overview tab */}
             {activeTab === 'overview' && (
               <div className="flex flex-col gap-6">
-
-                {/* Two-column: Banner LEFT (42%) | Description + Offers RIGHT (58%) */}
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
 
-                  {/* LEFT — Banner fills the full height of the right content */}
+                  {/* Banner */}
                   <div className="w-full shrink-0 lg:w-[42%]">
                     <div className="h-full min-h-[280px] overflow-hidden rounded-2xl shadow-sm">
-                      <CourseImage
-                        courseName={course.name}
-                        imageUrl={course.bannerImage}
-                        className="h-full w-full object-cover"
-                      />
+                      <CourseImage courseName={course.name} imageUrl={course.bannerImage} className="h-full w-full object-cover" />
                     </div>
                   </div>
 
-                  {/* RIGHT — Description card + Course Offers card */}
+                  {/* Description + What You Will Learn */}
                   <div className="flex flex-1 flex-col gap-4">
 
-                    {/* Description */}
                     <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
                       <div className="border-b border-gray-50 px-5 py-3">
                         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</h2>
                       </div>
                       <div className="p-5">
-                        {course.description ? (
-                          <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
-                            {course.description}
-                          </p>
-                        ) : (
-                          <p className="text-sm italic text-gray-400">No description provided.</p>
-                        )}
+                        {course.description
+                          ? <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">{course.description}</p>
+                          : <p className="text-sm italic text-gray-400">No description provided.</p>
+                        }
                       </div>
                     </div>
 
-                    {/* Course Offers — hidden when empty, column-fill layout */}
-                    {course.courseOffers &&
-                      course.courseOffers.split('\n').some((s) => s.trim()) && (() => {
-                        const offers = course.courseOffers!
-                          .split('\n')
-                          .map((s) => s.trim())
-                          .filter(Boolean);
-                        const mid   = Math.ceil(offers.length / 2);
-                        const left  = offers.slice(0, mid);
-                        const right = offers.slice(mid);
-                        return (
-                          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-                            <div className="border-b border-gray-50 px-5 py-3">
-                              <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                                Course Offers
-                              </h2>
-                            </div>
-                            <div className="flex gap-0 px-5 py-2">
-                              {/* Left column */}
+                    {/* What You Will Learn — hidden when empty, column-fill layout */}
+                    {course.whatYouWillLearn && course.whatYouWillLearn.split('\n').some((s) => s.trim()) && (() => {
+                      const items = course.whatYouWillLearn!.split('\n').map((s) => s.trim()).filter(Boolean);
+                      const mid   = Math.ceil(items.length / 2);
+                      const left  = items.slice(0, mid);
+                      const right = items.slice(mid);
+                      return (
+                        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                          <div className="border-b border-gray-50 px-5 py-3">
+                            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">What You Will Learn</h2>
+                          </div>
+                          <div className="flex px-5 py-2">
+                            <ul className="flex-1">
+                              {left.map((item, i) => (
+                                <li key={i} className="flex items-center gap-2 py-1.5 text-sm text-gray-700">
+                                  <CheckCircle2 size={13} className="shrink-0 text-amber-500" />
+                                  <span className="leading-snug">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {right.length > 0 && (
                               <ul className="flex-1">
-                                {left.map((item, i) => (
+                                {right.map((item, i) => (
                                   <li key={i} className="flex items-center gap-2 py-1.5 text-sm text-gray-700">
                                     <CheckCircle2 size={13} className="shrink-0 text-amber-500" />
                                     <span className="leading-snug">{item}</span>
                                   </li>
                                 ))}
                               </ul>
-                              {/* Right column — only render when there are items */}
-                              {right.length > 0 && (
-                                <ul className="flex-1">
-                                  {right.map((item, i) => (
-                                    <li key={i} className="flex items-center gap-2 py-1.5 text-sm text-gray-700">
-                                      <CheckCircle2 size={13} className="shrink-0 text-amber-500" />
-                                      <span className="leading-snug">{item}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
+                            )}
                           </div>
-                        );
-                      })()}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
-                {/* Recent Batches — full width below the two-column block */}
+                {/* Recent Batches */}
                 {!batchLoading && batches.length > 0 && (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-semibold text-gray-700">Recent Batches</h2>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('batches')}
-                        className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors"
-                      >
+                      <button type="button" onClick={() => setActiveTab('batches')}
+                        className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors">
                         View all {batches.length} →
                       </button>
                     </div>
-                    <BatchGrid
-                      batches={batches.slice(0, 3)}
-                      courseId={courseId}
-                      canEdit={isAdmin}
-                      canDelete={isSuperAdmin}
-                      onDelete={setBatchToDelete}
-                    />
+                    <BatchGrid batches={batches.slice(0, 3)} courseId={courseId} canEdit={isAdmin} canDelete={isSuperAdmin} onDelete={setBatchToDelete} />
                   </div>
                 )}
               </div>
             )}
 
-            {/* 5 — Batches tab */}
+            {/* Batches tab */}
             {activeTab === 'batches' && (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-gray-700">
-                    All Batches
-                    {batches.length > 0 && (
-                      <span className="ml-2 font-normal text-gray-400">({batches.length})</span>
-                    )}
+                    All Batches{batches.length > 0 && <span className="ml-2 font-normal text-gray-400">({batches.length})</span>}
                   </h2>
                   {isAdmin && (
                     <Button variant="primary" size="sm" onClick={() => navigate(buildRoute.batchCreate(courseId))}>
@@ -342,19 +269,10 @@ export function CourseDetailPage() {
                 </div>
                 {batchLoading && <BatchLoadingState count={3} />}
                 {!batchLoading && batches.length === 0 && (
-                  <BatchEmptyState
-                    canCreate={isAdmin}
-                    onCreateClick={() => navigate(buildRoute.batchCreate(courseId))}
-                  />
+                  <BatchEmptyState canCreate={isAdmin} onCreateClick={() => navigate(buildRoute.batchCreate(courseId))} />
                 )}
                 {!batchLoading && batches.length > 0 && (
-                  <BatchGrid
-                    batches={batches}
-                    courseId={courseId}
-                    canEdit={isAdmin}
-                    canDelete={isSuperAdmin}
-                    onDelete={setBatchToDelete}
-                  />
+                  <BatchGrid batches={batches} courseId={courseId} canEdit={isAdmin} canDelete={isSuperAdmin} onDelete={setBatchToDelete} />
                 )}
               </div>
             )}

@@ -1,7 +1,7 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { batchRepository } from './batch.repository';
 import { courseRepository } from '../course/course.repository';
-import { NotFoundError, ConflictError } from '../../core/errors/AppError';
+import { NotFoundError } from '../../core/errors/AppError';
 import { logger } from '../../core/logger';
 import { buildPaginationMeta } from '../../core/utils/response.util';
 import { PaginationMeta } from '../../core/types';
@@ -14,8 +14,16 @@ import {
   TrainerResponse,
   BatchLinksResponse,
   FindAllBatchesResult,
-} from './batch.types';
-import { Trainer, BatchLinks } from '@prisma/client';
+} from './batch.types';import { Trainer, BatchLinks } from '@prisma/client';
+
+// ─── Status derivation — computed from dates, never stored ───────────────────
+
+function deriveStatus(startDate: Date, endDate: Date | null): string {
+  const now = new Date();
+  if (now < startDate) return 'Upcoming';
+  if (endDate && now > endDate) return 'Completed';
+  return 'Live'; // started, no end date or within range
+}
 
 // ─── Response mappers ─────────────────────────────────────────────────────────
 
@@ -55,15 +63,21 @@ function toBatchResponse(b: BatchWithRelations): BatchResponse {
     batchNumber:    b.batchNumber,
     batchMonthYear: b.batchMonthYear ?? null,
     batchName:      b.batchName,
-    status:         b.status,
+    status:         deriveStatus(b.startDate, b.endDate),
     startDate:      b.startDate,
     endDate:        b.endDate,
-    price: b.price instanceof Decimal ? b.price.toNumber() : Number(b.price),
+    price:          b.price instanceof Decimal ? b.price.toNumber() : Number(b.price),
     supportEmail:   b.supportEmail,
-    trainer:     b.trainer     ? toTrainerResponse(b.trainer)         : null,
-    batchLinks:  b.batchLinks  ? toBatchLinksResponse(b.batchLinks)   : null,
-    createdAt:   b.createdAt,
-    updatedAt:   b.updatedAt,
+    duration:       b.duration       ?? null,
+    extraOffers:    b.extraOffers    ?? null,
+    feedback1:      b.feedback1      ?? null,
+    feedback2:      b.feedback2      ?? null,
+    feedback3:      b.feedback3      ?? null,
+    overallFeedback: b.overallFeedback ?? null,
+    trainer:    b.trainer    ? toTrainerResponse(b.trainer)       : null,
+    batchLinks: b.batchLinks ? toBatchLinksResponse(b.batchLinks) : null,
+    createdAt:  b.createdAt,
+    updatedAt:  b.updatedAt,
   };
 }
 
@@ -77,28 +91,19 @@ export class BatchService {
    *  - batchNumber is unique within the course
    */
   async createBatch(courseId: string, dto: CreateBatchDto): Promise<BatchResponse> {
-    // 1. Guard — course must exist
     const course = await courseRepository.findById(courseId);
-    if (!course) {
-      throw new NotFoundError('Course');
-    }
+    if (!course) throw new NotFoundError('Course');
 
-    // 2. Guard — batchNumber must be unique within the course
-    const duplicate = await batchRepository.findByNumber(courseId, dto.batchNumber);
-    if (duplicate) {
-      throw new ConflictError(
-        `Batch number ${dto.batchNumber} already exists for this course`,
-      );
-    }
+    // Auto-calculate the next batch number for this course
+    const maxBatchNumber = await batchRepository.getMaxBatchNumber(courseId);
+    const nextBatchNumber = maxBatchNumber + 1;
 
-    const batch = await batchRepository.createWithRelations(courseId, dto);
-
-    logger.info('Batch created', {
-      batchId: batch.id,
-      courseId,
-      batchNumber: dto.batchNumber,
+    const batch = await batchRepository.createWithRelations(courseId, {
+      ...dto,
+      batchNumber: nextBatchNumber,
     });
 
+    logger.info('Batch created', { batchId: batch.id, courseId, batchNumber: nextBatchNumber });
     return toBatchResponse(batch);
   }
 

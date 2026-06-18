@@ -23,13 +23,18 @@ export function EditBatchPage() {
     reset();
     updateBatch(
       {
-        batchMonthYear: data.batchMonthYear || undefined,
-        batchName:      data.batchName,
-        status:         data.status,
-        startDate:      data.startDate,
-        endDate:        data.endDate || undefined,
-        price:          data.price,
-        supportEmail:   data.supportEmail,
+        batchMonthYear:  data.batchMonthYear || undefined,
+        batchName:       data.batchName,
+        startDate:       data.startDate,
+        endDate:         data.endDate || undefined,
+        price:           data.price,
+        supportEmail:    data.supportEmail,
+        duration:        data.duration        || undefined,
+        extraOffers:     data.extraOffers     || undefined,
+        feedback1:       data.feedback1       ?? undefined,
+        feedback2:       data.feedback2       ?? undefined,
+        feedback3:       data.feedback3       ?? undefined,
+        overallFeedback: data.overallFeedback ?? undefined,
         trainer: {
           name:           data.trainer.name,
           email:          data.trainer.email,

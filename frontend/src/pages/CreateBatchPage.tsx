@@ -21,14 +21,18 @@ export function CreateBatchPage() {
     reset();
     createBatch(
       {
-        batchNumber:    1,
         batchMonthYear: data.batchMonthYear,
         batchName:      data.batchName,
-        status:         data.status,
         startDate:      data.startDate,
-        endDate:       data.endDate || undefined,
-        price:         data.price,
-        supportEmail:  data.supportEmail,
+        endDate:        data.endDate || undefined,
+        price:          data.price,
+        supportEmail:   data.supportEmail,
+        duration:       data.duration       || undefined,
+        extraOffers:    data.extraOffers    || undefined,
+        feedback1:      data.feedback1      ?? undefined,
+        feedback2:      data.feedback2      ?? undefined,
+        feedback3:      data.feedback3      ?? undefined,
+        overallFeedback: data.overallFeedback ?? undefined,
         trainer: {
           name:           data.trainer.name,
           email:          data.trainer.email,

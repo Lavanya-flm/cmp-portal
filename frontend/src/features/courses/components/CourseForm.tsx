@@ -41,20 +41,20 @@ export function CourseForm({
   } = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
-      name:         defaultValues?.name         ?? '',
-      description:  defaultValues?.description  ?? '',
-      courseOffers: defaultValues?.courseOffers ?? '',
-      bannerImage:  defaultValues?.bannerImage  ?? null,
+      name:             defaultValues?.name             ?? '',
+      description:      defaultValues?.description      ?? '',
+      whatYouWillLearn: defaultValues?.whatYouWillLearn ?? '',
+      bannerImage:      defaultValues?.bannerImage      ?? null,
     },
   });
 
   useEffect(() => {
     if (defaultValues) {
       reset({
-        name:         defaultValues.name         ?? '',
-        description:  defaultValues.description  ?? '',
-        courseOffers: defaultValues.courseOffers ?? '',
-        bannerImage:  defaultValues.bannerImage  ?? null,
+        name:             defaultValues.name             ?? '',
+        description:      defaultValues.description      ?? '',
+        whatYouWillLearn: defaultValues.whatYouWillLearn ?? '',
+        bannerImage:      defaultValues.bannerImage      ?? null,
       });
     }
   }, [defaultValues, reset]);
@@ -144,13 +144,13 @@ export function CourseForm({
         {...register('description')}
       />
 
-      {/* ── Course Offers ─────────────────────────────────────────────── */}
+      {/* ── What You Will Learn ───────────────────────────────────────── */}
       <Textarea
-        label="Course Offers"
+        label="What You Will Learn"
         placeholder="One item per line"
         rows={5}
-        error={errors.courseOffers?.message}
-        {...register('courseOffers')}
+        error={errors.whatYouWillLearn?.message}
+        {...register('whatYouWillLearn')}
       />
 
       <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">

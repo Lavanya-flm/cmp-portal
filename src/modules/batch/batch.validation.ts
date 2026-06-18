@@ -50,43 +50,33 @@ const batchLinksSchema = Joi.object({
 // ─── Create Batch ─────────────────────────────────────────────────────────────
 
 export const createBatchSchema = Joi.object({
-  batchNumber: Joi.number().integer().min(1).required().messages({
-    'number.base': 'Batch number must be a number',
-    'number.min': 'Batch number must be at least 1',
-    'any.required': 'Batch number is required',
-  }),
   batchMonthYear: Joi.string().trim().max(100).optional().allow('', null),
   batchName: Joi.string().trim().min(2).max(150).required().messages({
     'string.empty': 'Batch name is required',
     'any.required': 'Batch name is required',
   }),
-  status: Joi.string().valid('Upcoming', 'Live', 'Completed').default('Upcoming').messages({
-    'any.only': 'Status must be one of: Upcoming, Live, Completed',
+  startDate: Joi.string().isoDate().required().messages({
+    'string.isoDate': 'Start date must be a valid ISO date (YYYY-MM-DD)',
+    'any.required':   'Start date is required',
   }),
-  startDate: Joi.string()
-    .isoDate()
-    .required()
-    .messages({
-      'string.isoDate': 'Start date must be a valid ISO date (YYYY-MM-DD)',
-      'any.required': 'Start date is required',
-    }),
   endDate: Joi.string().isoDate().optional().allow('', null).messages({
     'string.isoDate': 'End date must be a valid ISO date (YYYY-MM-DD)',
   }),
   price: Joi.number().min(0).precision(2).required().messages({
     'number.base': 'Price must be a number',
-    'number.min': 'Price must be 0 or more',
+    'number.min':  'Price must be 0 or more',
     'any.required': 'Price is required',
   }),
-  supportEmail: Joi.string()
-    .email({ tlds: { allow: false } })
-    .lowercase()
-    .trim()
-    .required()
-    .messages({
-      'string.email': 'Support email must be a valid email address',
-      'any.required': 'Support email is required',
-    }),
+  supportEmail: Joi.string().email({ tlds: { allow: false } }).lowercase().trim().required().messages({
+    'string.email': 'Support email must be a valid email address',
+    'any.required': 'Support email is required',
+  }),
+  duration: Joi.string().trim().max(100).optional().allow('', null),
+  extraOffers: Joi.string().trim().max(5000).optional().allow('', null),
+  feedback1:       Joi.number().min(1).max(5).optional().allow(null),
+  feedback2:       Joi.number().min(1).max(5).optional().allow(null),
+  feedback3:       Joi.number().min(1).max(5).optional().allow(null),
+  overallFeedback: Joi.number().min(1).max(5).optional().allow(null),
   trainer: trainerCreateSchema.required().messages({
     'any.required': 'Trainer information is required',
   }),
@@ -98,34 +88,31 @@ export const createBatchSchema = Joi.object({
 export const updateBatchSchema = Joi.object({
   batchName:      Joi.string().trim().min(2).max(150).optional(),
   batchMonthYear: Joi.string().trim().max(100).optional().allow('', null),
-  status: Joi.string().valid('Upcoming', 'Live', 'Completed').optional().messages({
-    'any.only': 'Status must be one of: Upcoming, Live, Completed',
-  }),
   startDate: Joi.string().isoDate().optional().allow(null).messages({
     'string.isoDate': 'Start date must be a valid ISO date (YYYY-MM-DD)',
   }),
   endDate: Joi.string().isoDate().optional().allow('', null).messages({
     'string.isoDate': 'End date must be a valid ISO date (YYYY-MM-DD)',
   }),
-  price: Joi.number().min(0).precision(2).optional(),
-  supportEmail: Joi.string()
-    .email({ tlds: { allow: false } })
-    .lowercase()
-    .trim()
-    .optional(),
-  trainer: trainerUpdateSchema.optional(),
+  price:        Joi.number().min(0).precision(2).optional(),
+  supportEmail: Joi.string().email({ tlds: { allow: false } }).lowercase().trim().optional(),
+  duration:     Joi.string().trim().max(100).optional().allow('', null),
+  extraOffers:     Joi.string().trim().max(5000).optional().allow('', null),
+  feedback1:       Joi.number().min(1).max(5).optional().allow(null),
+  feedback2:       Joi.number().min(1).max(5).optional().allow(null),
+  feedback3:       Joi.number().min(1).max(5).optional().allow(null),
+  overallFeedback: Joi.number().min(1).max(5).optional().allow(null),
+  trainer:    trainerUpdateSchema.optional(),
   batchLinks: batchLinksSchema.optional(),
-}).min(1).messages({
-  'object.min': 'At least one field must be provided for update',
-});
+}).min(1).messages({ 'object.min': 'At least one field must be provided for update' });
 
 // ─── List query ───────────────────────────────────────────────────────────────
 
 export const batchQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
-  sortBy: Joi.string().valid('batchNumber', 'startDate', 'createdAt').default('batchNumber'),
-  sortOrder: Joi.string().valid('asc', 'desc').default('asc'),
+  page:      Joi.number().integer().min(1).default(1),
+  limit:     Joi.number().integer().min(1).max(100).default(10),
+  sortBy:    Joi.string().valid('batchNumber', 'startDate', 'createdAt').default('createdAt'),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });
 
 // ─── Params ───────────────────────────────────────────────────────────────────

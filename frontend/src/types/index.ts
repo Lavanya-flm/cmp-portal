@@ -119,12 +119,10 @@ export interface Course {
   id: string;
   name: string;
   description: string | null;
-  /** Base64 data URL or remote URL of the uploaded banner */
   bannerImage?: string | null;
-  /** Upcoming | Live | Completed */
   status?: string;
-  /** Multi-line text listing what the course offers */
-  courseOffers?: string | null;
+  /** Multi-line text listing what students will learn */
+  whatYouWillLearn?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,7 +132,7 @@ export interface CreateCourseRequest {
   description?: string;
   status?: string;
   bannerImage?: string | null;
-  courseOffers?: string;
+  whatYouWillLearn?: string;
 }
 
 export interface UpdateCourseRequest {
@@ -142,7 +140,7 @@ export interface UpdateCourseRequest {
   description?: string;
   status?: string;
   bannerImage?: string | null;
-  courseOffers?: string;
+  whatYouWillLearn?: string;
 }
 
 // ─── Batch ────────────────────────────────────────────────────────────────────
@@ -178,11 +176,18 @@ export interface Batch {
   batchNumber: number;
   batchMonthYear: string | null;
   batchName: string;
+  /** Derived from dates — never stored */
   status: string;
   startDate: string;
   endDate: string | null;
   price: number;
   supportEmail: string;
+  duration: string | null;
+  extraOffers: string | null;
+  feedback1: number | null;
+  feedback2: number | null;
+  feedback3: number | null;
+  overallFeedback: number | null;
   trainer: Trainer | null;
   batchLinks: BatchLinks | null;
   createdAt: string;
@@ -209,14 +214,18 @@ export interface CreateBatchLinksRequest {
 }
 
 export interface CreateBatchRequest {
-  batchNumber: number;
   batchMonthYear?: string;
   batchName: string;
-  status?: string;
   startDate: string;
   endDate?: string;
   price: number;
   supportEmail: string;
+  duration?: string;
+  extraOffers?: string;
+  feedback1?: number;
+  feedback2?: number;
+  feedback3?: number;
+  overallFeedback?: number;
   trainer: CreateTrainerRequest;
   batchLinks?: CreateBatchLinksRequest;
 }
@@ -224,11 +233,16 @@ export interface CreateBatchRequest {
 export interface UpdateBatchRequest {
   batchName?: string;
   batchMonthYear?: string;
-  status?: string;
   startDate?: string;
   endDate?: string;
   price?: number;
   supportEmail?: string;
+  duration?: string;
+  extraOffers?: string;
+  feedback1?: number;
+  feedback2?: number;
+  feedback3?: number;
+  overallFeedback?: number;
   trainer?: Partial<CreateTrainerRequest>;
   batchLinks?: CreateBatchLinksRequest;
 }

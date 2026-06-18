@@ -15,11 +15,11 @@ export class CourseRepository {
   async create(dto: CreateCourseDto): Promise<CourseEntity> {
     return prisma.course.create({
       data: {
-        name:         dto.name,
-        description:  dto.description  ?? null,
-        status:       dto.status       ?? 'Upcoming',
-        bannerImage:  dto.bannerImage  ?? null,
-        courseOffers: dto.courseOffers ?? null,
+        name:             dto.name,
+        description:      dto.description      ?? null,
+        status:           dto.status           ?? 'Upcoming',
+        bannerImage:      dto.bannerImage      ?? null,
+        whatYouWillLearn: dto.whatYouWillLearn ?? null,
       },
     });
   }
@@ -86,11 +86,11 @@ export class CourseRepository {
     return prisma.course.update({
       where: { id },
       data: {
-        ...(dto.name         !== undefined && { name:         dto.name }),
-        ...(dto.description  !== undefined && { description:  dto.description }),
-        ...(dto.status       !== undefined && { status:       dto.status }),
-        ...(dto.bannerImage  !== undefined && { bannerImage:  dto.bannerImage }),
-        ...(dto.courseOffers !== undefined && { courseOffers: dto.courseOffers }),
+        ...(dto.name             !== undefined && { name:             dto.name }),
+        ...(dto.description      !== undefined && { description:      dto.description }),
+        ...(dto.status           !== undefined && { status:           dto.status }),
+        ...(dto.bannerImage      !== undefined && { bannerImage:      dto.bannerImage }),
+        ...(dto.whatYouWillLearn !== undefined && { whatYouWillLearn: dto.whatYouWillLearn }),
       },
     });
   }

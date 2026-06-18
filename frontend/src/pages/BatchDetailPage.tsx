@@ -80,11 +80,6 @@ export function BatchDetailPage() {
     ? Object.values(batch.batchLinks).filter((v) => typeof v === 'string' && v.startsWith('http')).length
     : 0;
 
-  // Duration in days
-  const durationDays = batch?.endDate
-    ? Math.round((new Date(batch.endDate).getTime() - new Date(batch.startDate).getTime()) / (1000 * 60 * 60 * 24))
-    : null;
-
   return (
     <AppLayout>
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
@@ -223,6 +218,38 @@ export function BatchDetailPage() {
                       />
                     )}
                   </div>
+                  {/* Extra Offers — 2-column layout matching What You Will Learn */}
+                  {batch.extraOffers && batch.extraOffers.split('\n').some((s) => s.trim()) && (() => {
+                    const items = batch.extraOffers!.split('\n').map((s) => s.trim()).filter(Boolean);
+                    const mid   = Math.ceil(items.length / 2);
+                    const left  = items.slice(0, mid);
+                    const right = items.slice(mid);
+                    return (
+                      <div className="mt-4 border-t border-gray-50 pt-4">
+                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Extra Offers</p>
+                        <div className="flex">
+                          <ul className="flex-1">
+                            {left.map((item, i) => (
+                              <li key={i} className="flex items-center gap-2 py-1 text-sm text-gray-700">
+                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                                <span className="leading-snug">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {right.length > 0 && (
+                            <ul className="flex-1">
+                              {right.map((item, i) => (
+                                <li key={i} className="flex items-center gap-2 py-1 text-sm text-gray-700">
+                                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                                  <span className="leading-snug">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </SectionCard>
 
                 {/* Trainer + Links tabs */}
@@ -235,35 +262,27 @@ export function BatchDetailPage() {
                 />
               </div>
 
-              {/* RIGHT — Trainer summary + Batch Summary */}
+              {/* RIGHT — Batch Ratings + Batch Summary */}
               <div className="flex flex-col gap-4">
 
-                {/* Trainer card */}
-                <SectionCard title="Trainer">
-                  {batch.trainer ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-600">
-                          {batch.trainer.name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()}
+                {/* Batch Ratings card — replaces Trainer card */}
+                <SectionCard title="Batch Ratings">
+                  {(batch.feedback1 != null || batch.feedback2 != null || batch.feedback3 != null || batch.overallFeedback != null) ? (
+                    <div className="flex flex-col divide-y divide-gray-50">
+                      {[
+                        { label: 'Feedback 1', value: batch.feedback1 },
+                        { label: 'Feedback 2', value: batch.feedback2 },
+                        { label: 'Feedback 3', value: batch.feedback3 },
+                        { label: 'Overall',    value: batch.overallFeedback },
+                      ].map(({ label, value }) => value != null && (
+                        <div key={label} className="flex items-center justify-between py-2.5 first:pt-0">
+                          <span className="text-xs font-semibold text-gray-400">{label}</span>
+                          <span className="text-sm font-bold text-gray-800">{value.toFixed(1)} / 5</span>
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-gray-900">{batch.trainer.name}</p>
-                          {batch.trainer.currentCompany && (
-                            <p className="truncate text-xs text-gray-500">{batch.trainer.currentCompany}</p>
-                          )}
-                          {batch.trainer.experience != null && (
-                            <span className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                              {batch.trainer.experience}+ Yrs
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="border-t border-gray-50 pt-2">
-                        <InfoCell icon={<Mail size={11} />} label="Email" value={batch.trainer.email} />
-                      </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-sm italic text-gray-400">No trainer assigned.</p>
+                    <p className="text-sm italic text-gray-400">No ratings recorded yet.</p>
                   )}
                 </SectionCard>
 
@@ -281,7 +300,7 @@ export function BatchDetailPage() {
                     <div className="flex items-center justify-between py-2.5">
                       <span className="text-xs font-semibold text-gray-400">Duration</span>
                       <span className="text-sm font-semibold text-gray-800">
-                        {durationDays != null ? `${durationDays} Days` : '—'}
+                        {batch.duration ?? '—'}
                       </span>
                     </div>
 

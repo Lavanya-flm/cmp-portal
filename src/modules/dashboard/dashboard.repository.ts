@@ -11,6 +11,8 @@ export class DashboardRepository {
    * Uses a single $transaction to run all queries in one round-trip.
    */
   async getAdminSummary(): Promise<AdminSummaryResponse> {
+    const now = new Date();
+
     const [
       totalCourses,
       totalBatches,
@@ -21,9 +23,20 @@ export class DashboardRepository {
     ] = await prisma.$transaction([
       prisma.course.count(),
       prisma.batch.count(),
-      prisma.batch.count({ where: { status: 'Live' } }),
-      prisma.batch.count({ where: { status: 'Upcoming' } }),
-      prisma.batch.count({ where: { status: 'Completed' } }),
+      // Live: startDate <= now AND (endDate is null OR endDate >= now)
+      prisma.batch.count({
+        where: {
+          startDate: { lte: now },
+          OR: [
+            { endDate: null },
+            { endDate: { gte: now } },
+          ],
+        },
+      }),
+      // Upcoming: startDate > now
+      prisma.batch.count({ where: { startDate: { gt: now } } }),
+      // Completed: endDate < now (endDate is not null)
+      prisma.batch.count({ where: { endDate: { lt: now } } }),
       prisma.user.count({ where: { deletedAt: null } }),
     ]);
 
@@ -68,21 +81,30 @@ export class DashboardRepository {
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: {
-        id:            true,
-        batchName:     true,
+        id:             true,
+        batchName:      true,
         batchMonthYear: true,
-        status:        true,
-        course:        { select: { name: true } },
+        startDate:      true,
+        endDate:        true,
+        course:         { select: { name: true } },
       },
     });
 
-    return batches.map((b) => ({
-      id:             b.id,
-      batchName:      b.batchName,
-      batchMonthYear: b.batchMonthYear,
-      status:         b.status,
-      courseName:     b.course.name,
-    }));
+    const now = new Date();
+    return batches.map((b) => {
+      let status: string;
+      if (now < b.startDate) status = 'Upcoming';
+      else if (b.endDate && now > b.endDate) status = 'Completed';
+      else status = 'Live';
+
+      return {
+        id:             b.id,
+        batchName:      b.batchName,
+        batchMonthYear: b.batchMonthYear,
+        status,
+        courseName:     b.course.name,
+      };
+    });
   }
 }
 

@@ -3,13 +3,10 @@ import { z } from 'zod';
 const urlOrEmpty = z
   .string()
   .optional()
-  .transform((v) => v?.trim() || undefined)   // treat whitespace-only as empty
+  .transform((v) => v?.trim() || undefined)
   .refine((v) => !v || /^https?:\/\/.+/.test(v), {
     message: 'Please enter a valid URL (starting with https://)',
   });
-
-// ─── Reusable phone validation ───────────────────────────────────────────────
-// Accepts empty/undefined (field is optional) OR exactly 10 digits starting 6-9.
 
 const phoneOrEmpty = z
   .string()
@@ -25,6 +22,21 @@ const phoneOrEmpty = z
           : 'Phone number must start with 6, 7, 8, or 9',
     }),
   );
+
+// ─── Feedback rating — optional, 1–5, decimals allowed ───────────────────────
+// Empty string / undefined / null all pass — ratings are collected later via Edit
+
+const feedbackRating = z
+  .union([z.literal(''), z.literal(null), z.undefined()])
+  .transform(() => undefined)
+  .or(
+    z.coerce
+      .number({ invalid_type_error: 'Must be a number between 1 and 5' })
+      .min(1, 'Minimum rating is 1')
+      .max(5, 'Maximum rating is 5'),
+  )
+  .optional()
+  .nullable();
 
 // ─── Trainer sub-schema ───────────────────────────────────────────────────────
 
@@ -49,24 +61,17 @@ const batchLinksSchema = z.object({
   communityLink:        urlOrEmpty,
 });
 
-// ─── Allowed batch statuses ───────────────────────────────────────────────────
-export const BATCH_STATUSES = ['Upcoming', 'Live', 'Completed'] as const;
-export type BatchStatusOption = typeof BATCH_STATUSES[number];
-
 // ─── Full batch form schema ───────────────────────────────────────────────────
+// status is intentionally omitted — derived automatically from dates
 
 export const batchSchema = z.object({
   batchMonthYear: z
     .string()
     .min(1, 'Batch month & year is required')
     .max(100, 'Must not exceed 100 characters'),
-  batchName: z.string().min(1, 'Batch name is required').max(150),
-  status: z.enum(BATCH_STATUSES, {
-    required_error: 'Status is required',
-    invalid_type_error: 'Select a valid status',
-  }),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate:   z.string().optional().or(z.literal('')),
+  batchName:    z.string().min(1, 'Batch name is required').max(150),
+  startDate:    z.string().min(1, 'Start date is required'),
+  endDate:      z.string().optional().or(z.literal('')),
   price: z.coerce
     .number({ invalid_type_error: 'Price is required' })
     .min(0, 'Price must be 0 or more'),
@@ -74,6 +79,12 @@ export const batchSchema = z.object({
     .string()
     .min(1, 'Support email is required')
     .email('Enter a valid email address'),
+  duration:    z.string().max(100).optional().or(z.literal('')),
+  extraOffers: z.string().max(5000).optional().or(z.literal('')),
+  feedback1:       feedbackRating,
+  feedback2:       feedbackRating,
+  feedback3:       feedbackRating,
+  overallFeedback: feedbackRating,
   trainer:    trainerSchema,
   batchLinks: batchLinksSchema.optional(),
 });

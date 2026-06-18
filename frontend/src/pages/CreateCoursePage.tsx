@@ -17,10 +17,10 @@ export function CreateCoursePage() {
     reset();
     createCourse(
       {
-        name:         data.name,
-        description:  data.description  || undefined,
-        bannerImage:  data.bannerImage  ?? null,
-        courseOffers: data.courseOffers || undefined,
+        name:             data.name,
+        description:      data.description      || undefined,
+        bannerImage:      data.bannerImage      ?? null,
+        whatYouWillLearn: data.whatYouWillLearn || undefined,
       },
       {
         onSuccess: () => {

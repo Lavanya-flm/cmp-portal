@@ -1,12 +1,9 @@
 import { Batch, Trainer, BatchLinks } from '@prisma/client';
 
-// ─── Entities ─────────────────────────────────────────────────────────────────
-
 export type BatchEntity = Batch;
 export type TrainerEntity = Trainer;
 export type BatchLinksEntity = BatchLinks;
 
-/** Full batch record with both relations included */
 export type BatchWithRelations = Batch & {
   trainer: Trainer | null;
   batchLinks: BatchLinks | null;
@@ -46,28 +43,43 @@ export interface CreateBatchLinksDto {
 export interface UpdateBatchLinksDto extends CreateBatchLinksDto {}
 
 // ─── Batch DTOs ───────────────────────────────────────────────────────────────
+// status is intentionally excluded — computed dynamically from dates
 
 export interface CreateBatchDto {
-  batchNumber: number;
   batchMonthYear?: string;
   batchName: string;
-  status?: string;
   startDate: string;
   endDate?: string;
   price: number;
   supportEmail: string;
+  duration?: string;
+  extraOffers?: string | null;
+  feedback1?: number | null;
+  feedback2?: number | null;
+  feedback3?: number | null;
+  overallFeedback?: number | null;
   trainer: CreateTrainerDto;
   batchLinks?: CreateBatchLinksDto;
+}
+
+/** Internal DTO used by the repository — batchNumber is computed by the service */
+export interface CreateBatchWithNumberDto extends CreateBatchDto {
+  batchNumber: number;
 }
 
 export interface UpdateBatchDto {
   batchName?: string;
   batchMonthYear?: string;
-  status?: string;
   startDate?: string;
   endDate?: string;
   price?: number;
   supportEmail?: string;
+  duration?: string;
+  extraOffers?: string | null;
+  feedback1?: number | null;
+  feedback2?: number | null;
+  feedback3?: number | null;
+  overallFeedback?: number | null;
   trainer?: UpdateTrainerDto;
   batchLinks?: UpdateBatchLinksDto;
 }
@@ -75,7 +87,9 @@ export interface UpdateBatchDto {
 export interface BatchQueryDto {
   page?: number;
   limit?: number;
+  /** Defaults to 'createdAt' — newest first */
   sortBy?: 'batchNumber' | 'startDate' | 'createdAt';
+  /** Defaults to 'desc' */
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -112,18 +126,23 @@ export interface BatchResponse {
   batchNumber: number;
   batchMonthYear: string | null;
   batchName: string;
+  /** Derived at runtime — not stored in DB */
   status: string;
   startDate: Date;
   endDate: Date | null;
   price: number;
   supportEmail: string;
+  duration: string | null;
+  extraOffers: string | null;
+  feedback1: number | null;
+  feedback2: number | null;
+  feedback3: number | null;
+  overallFeedback: number | null;
   trainer: TrainerResponse | null;
   batchLinks: BatchLinksResponse | null;
   createdAt: Date;
   updatedAt: Date;
 }
-
-// ─── Repository result ────────────────────────────────────────────────────────
 
 export interface FindAllBatchesResult {
   data: BatchWithRelations[];

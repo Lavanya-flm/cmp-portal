@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { User } from '@prisma/client';
 import { authRepository } from './auth.repository';
 import { userRepository } from '../user/user.repository';
+import { emailService } from '../../services/email.service';
 import { generateTokenPair, verifyRefreshToken } from '../../core/utils/jwt.util';
 import { comparePassword, hashPassword } from '../../core/utils/password.util';
 import { logger } from '../../core/logger';
@@ -237,16 +238,15 @@ export class AuthService {
    * Always returns a success message even when the email is not found —
    * this prevents user enumeration.
    */
-  async forgotPassword(dto: ForgotPasswordDto): Promise<{ resetToken: string | null }> {
-    const PASSWORD_RESET_EXPIRES_MINS = 30;
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    const PASSWORD_RESET_EXPIRES_MINS = env.email.passwordResetExpiresMins;
 
-    // Look up user — deliberately not throwing if missing
+    // Look up user — deliberately silent if not found (prevents enumeration)
     const userRecord = await authRepository.findUserByEmail(dto.email);
 
     if (!userRecord) {
-      // Silent success — do not reveal whether the email exists
       logger.info('Forgot password request for unknown email', { email: dto.email });
-      return { resetToken: null };
+      return; // Return void — caller always gets success response
     }
 
     // Revoke any existing unused PASSWORD_RESET tokens for this user
@@ -258,16 +258,17 @@ export class AuthService {
 
     await authRepository.createPasswordResetToken(userRecord.id, resetToken, expiresAt);
 
-    logger.info('Password reset token generated', {
-      userId: userRecord.id,
-      expiresAt,
-      // Log token to console in development so it can be tested without email
-      ...(env.nodeEnv === 'development' && { resetToken }),
-    });
+    // Build the reset link
+    const resetLink = `${env.email.frontendUrl}/reset-password?token=${resetToken}`;
 
-    // In development — return token directly in response
-    // In production — return null (token will be sent via email)
-    return { resetToken: env.nodeEnv === 'development' ? resetToken : null };
+    logger.info('Password reset token generated', { userId: userRecord.id, expiresAt });
+
+    // Send the email — failure is silent to the user (logged internally)
+    await emailService.sendPasswordResetEmail(
+      userRecord.email,
+      userRecord.firstName,
+      resetLink,
+    );
   }
 
   // ─── Reset password ────────────────────────────────────────────────────────

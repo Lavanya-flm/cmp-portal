@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database';
 import {
-  CreateBatchDto,
+  CreateBatchWithNumberDto,
   UpdateBatchDto,
   BatchQueryDto,
   BatchWithRelations,
@@ -22,7 +22,7 @@ export class BatchRepository {
    */
   async createWithRelations(
     courseId: string,
-    dto: CreateBatchDto,
+    dto: CreateBatchWithNumberDto,
   ): Promise<BatchWithRelations> {
     return prisma.$transaction(async (tx) => {
       // 1. Create the batch
@@ -32,11 +32,16 @@ export class BatchRepository {
           batchNumber:    dto.batchNumber,
           batchMonthYear: dto.batchMonthYear ?? null,
           batchName:      dto.batchName,
-          status:         dto.status         ?? 'Upcoming',
           startDate:      new Date(dto.startDate),
           endDate:        dto.endDate ? new Date(dto.endDate) : null,
           price:          new Prisma.Decimal(dto.price),
           supportEmail:   dto.supportEmail,
+          duration:       dto.duration       ?? null,
+          extraOffers:    dto.extraOffers    ?? null,
+          feedback1:      dto.feedback1      ?? null,
+          feedback2:      dto.feedback2      ?? null,
+          feedback3:      dto.feedback3      ?? null,
+          overallFeedback: dto.overallFeedback ?? null,
         },
       });
 
@@ -82,7 +87,7 @@ export class BatchRepository {
     courseId: string,
     query: BatchQueryDto,
   ): Promise<FindAllBatchesResult> {
-    const { page = 1, limit = 10, sortBy = 'batchNumber', sortOrder = 'asc' } = query;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.BatchWhereInput = { courseId };
@@ -145,11 +150,16 @@ export class BatchRepository {
         data: {
           ...(dto.batchName      !== undefined && { batchName:      dto.batchName }),
           ...(dto.batchMonthYear !== undefined && { batchMonthYear: dto.batchMonthYear }),
-          ...(dto.status         !== undefined && { status:         dto.status }),
           ...(dto.startDate      !== undefined && { startDate:      new Date(dto.startDate) }),
           ...(dto.endDate        !== undefined && { endDate: dto.endDate ? new Date(dto.endDate) : null }),
           ...(dto.price          !== undefined && { price:          new Prisma.Decimal(dto.price) }),
           ...(dto.supportEmail   !== undefined && { supportEmail:   dto.supportEmail }),
+          ...(dto.duration       !== undefined && { duration:       dto.duration }),
+          ...(dto.extraOffers    !== undefined && { extraOffers:    dto.extraOffers }),
+          ...(dto.feedback1      !== undefined && { feedback1:      dto.feedback1 }),
+          ...(dto.feedback2      !== undefined && { feedback2:      dto.feedback2 }),
+          ...(dto.feedback3      !== undefined && { feedback3:      dto.feedback3 }),
+          ...(dto.overallFeedback !== undefined && { overallFeedback: dto.overallFeedback }),
         },
       });
 
@@ -199,6 +209,18 @@ export class BatchRepository {
    */
   async delete(id: string): Promise<void> {
     await prisma.batch.delete({ where: { id } });
+  }
+
+  /**
+   * Get the highest batchNumber for a course so we can auto-increment.
+   * Returns 0 when no batches exist yet.
+   */
+  async getMaxBatchNumber(courseId: string): Promise<number> {
+    const result = await prisma.batch.aggregate({
+      where: { courseId },
+      _max: { batchNumber: true },
+    });
+    return result._max.batchNumber ?? 0;
   }
 }
 

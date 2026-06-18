@@ -1,17 +1,13 @@
 import { Course } from '@prisma/client';
 
-// ─── Entity ───────────────────────────────────────────────────────────────────
-
 export type CourseEntity = Course;
-
-// ─── DTOs ─────────────────────────────────────────────────────────────────────
 
 export interface CreateCourseDto {
   name: string;
   description?: string;
   status?: string;
   bannerImage?: string | null;
-  courseOffers?: string | null;
+  whatYouWillLearn?: string | null;
 }
 
 export interface UpdateCourseDto {
@@ -19,7 +15,7 @@ export interface UpdateCourseDto {
   description?: string;
   status?: string;
   bannerImage?: string | null;
-  courseOffers?: string | null;
+  whatYouWillLearn?: string | null;
 }
 
 export interface CourseQueryDto {
@@ -30,20 +26,16 @@ export interface CourseQueryDto {
   sortOrder?: 'asc' | 'desc';
 }
 
-// ─── Response shapes ──────────────────────────────────────────────────────────
-
 export interface CourseResponse {
   id: string;
   name: string;
   description: string | null;
   status: string | null;
   bannerImage: string | null;
-  courseOffers: string | null;
+  whatYouWillLearn: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
-
-// ─── Repository interface ─────────────────────────────────────────────────────
 
 export interface FindAllCoursesResult {
   data: CourseEntity[];
