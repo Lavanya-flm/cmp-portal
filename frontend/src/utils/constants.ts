@@ -73,6 +73,10 @@ export const API_ENDPOINTS = {
 
   // Dashboard
   DASHBOARD: '/dashboard',
+
+  // Batch Resources
+  BATCH_RESOURCES:    (batchId: string) => `/batches/${batchId}/resources`,
+  BATCH_RESOURCE_BY_ID: (batchId: string, resourceId: string) => `/batches/${batchId}/resources/${resourceId}`,
 } as const;
 
 // ─── Token storage keys ───────────────────────────────────────────────────────
@@ -104,4 +108,7 @@ export const QUERY_KEYS = {
 
   // Dashboard
   DASHBOARD: ['dashboard'] as const,
+
+  // Batch Resources
+  BATCH_RESOURCES: (batchId: string) => ['batch-resources', batchId] as const,
 } as const;

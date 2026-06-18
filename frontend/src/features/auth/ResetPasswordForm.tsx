@@ -60,9 +60,9 @@ export function ResetPasswordForm() {
             error={errors.newPassword?.message}
             {...register('newPassword')}
           />
-          <p className="mt-1.5 text-xs text-gray-400">
+          {/* <p className="mt-1.5 text-xs text-gray-400">
             Min 8 characters · uppercase · lowercase · number · special character
-          </p>
+          </p> */}
         </div>
 
         <PasswordInput

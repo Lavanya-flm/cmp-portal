@@ -24,6 +24,17 @@ enum TokenType {
   EMAIL_VERIFICATION
 }
 
+enum ResourceType {
+  SYLLABUS
+  PROJECT_DOCUMENT
+  ASSIGNMENT
+  INTERVIEW_QUESTION
+  PPT
+  NOTE
+  CHEAT_SHEET
+  PLACEMENT_MATERIAL
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -133,6 +144,7 @@ model Batch {
   course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   trainer    Trainer?
   batchLinks BatchLinks?
+  resources  BatchResource[]
 
   // A batch number must be unique within a course
   @@unique([courseId, batchNumber], name: "uq_batch_course_number")
@@ -181,4 +193,27 @@ model BatchLinks {
   batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
   @@map("batch_links")
+}
+
+// ─── BatchResource ────────────────────────────────────────────────────────────
+
+model BatchResource {
+  id           String       @id @default(uuid())
+  batchId      String       @map("batch_id")
+  resourceType ResourceType @map("resource_type")
+  title        String
+  description  String?      @db.Text
+  fileName     String       @map("file_name")
+  fileUrl      String       @map("file_url")      @db.Text
+  fileSize     Int?         @map("file_size")      // bytes
+  mimeType     String?      @map("mime_type")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([resourceType])
+  @@map("batch_resources")
 }

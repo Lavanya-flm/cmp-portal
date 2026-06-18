@@ -1,16 +1,22 @@
-import { Resend } from 'resend';
+import axios, { AxiosInstance } from 'axios';
 import { env } from '../config/env';
 import { logger } from '../core/logger';
 
-// ─── Client (lazy singleton) ──────────────────────────────────────────────────
+// ─── AWS SES Email Client (lazy singleton) ────────────────────────────────────
 
-let _resend: Resend | null = null;
+let _emailClient: AxiosInstance | null = null;
 
-function getResendClient(): Resend {
-  if (!_resend) {
-    _resend = new Resend(env.email.resendApiKey);
+function getEmailClient(): AxiosInstance {
+  if (!_emailClient) {
+    _emailClient = axios.create({
+      baseURL: env.email.apiEndpoint,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 30000, // 30 second timeout
+    });
   }
-  return _resend;
+  return _emailClient;
 }
 
 // ─── HTML email template ──────────────────────────────────────────────────────
@@ -97,51 +103,170 @@ function buildPasswordResetHtml(firstName: string, resetLink: string): string {
 
 // ─── Email service ────────────────────────────────────────────────────────────
 
+interface SendEmailPayload {
+  fromEmail: string;
+  toEmails: string[];
+  ccEmails?: string[];
+  bccEmails?: string[];
+  subject: string;
+  bodyText: string;
+  bodyHtml: string;
+  replyTo?: string;
+  priority?: number;
+  maxRetries?: number;
+  metadata?: Record<string, string>;
+}
+
 export class EmailService {
   /**
-   * Send a password reset email via Resend.
+   * Send a password reset email via AWS SES.
    *
    * Failures are logged but NOT re-thrown so the caller always returns
    * a success response — this prevents leaking whether the send succeeded.
    *
-   * @returns true if sent, false if sending failed (API key missing / Resend error)
+   * @returns true if sent, false if sending failed (API key missing / AWS SES error)
    */
   async sendPasswordResetEmail(
     to: string,
     firstName: string,
     resetLink: string,
   ): Promise<boolean> {
-    const key = env.email.resendApiKey;
-    const isPlaceholder = !key || key === 're_your_api_key_here' || key.startsWith('re_your');
+    const apiKey = env.email.apiKey;
+    const apiEndpoint = env.email.apiEndpoint;
 
-    if (isPlaceholder) {
-      logger.warn('[Email] Skipping password reset email — RESEND_API_KEY not configured', { to });
+    if (!apiKey || !apiEndpoint) {
+      logger.warn('[Email] Skipping password reset email — EMAIL_API_KEY or EMAIL_API_ENDPOINT not configured', { to });
       return false;
     }
 
     try {
-      const resend = getResendClient();
+      const client = getEmailClient();
+      
+      const bodyHtml = buildPasswordResetHtml(firstName, resetLink);
+      const bodyText = `Hi ${firstName},\n\nWe received a request to reset the password for your CMP Portal account.\n\nPlease visit the following link to reset your password:\n${resetLink}\n\nThis link will expire in ${env.email.passwordResetExpiresMins} minutes.\n\nIf you did not request a password reset, you can safely ignore this email.\n\n© ${new Date().getFullYear()} Frontlines Edutech · CMP Portal`;
 
-      const { error } = await resend.emails.send({
-        from:    env.email.from,
-        to:      [to],
+      const payload: SendEmailPayload = {
+        fromEmail: env.email.fromEmail,
+        toEmails: [to],
         subject: 'Reset Your Password – Frontlines Edutech',
-        html:    buildPasswordResetHtml(firstName, resetLink),
+        bodyText,
+        bodyHtml,
+        replyTo: env.email.replyToEmail,
+        priority: 8,
+        maxRetries: 5,
+        metadata: {
+          emailType: 'password-reset',
+          source: 'cmp-portal',
+        },
+      };
+
+      const response = await client.post('/send', payload, {
+        headers: {
+          'x-api-key': env.email.apiKey,
+        },
       });
 
-      if (error) {
-        logger.error('[Email] Resend API returned an error', { to, error: error.message });
+      if (response.status === 200 || response.status === 202) {
+        logger.info('[Email] Password reset email sent successfully', { to, status: response.status });
+        return true;
+      } else {
+        logger.error('[Email] AWS SES API returned unexpected status', { to, status: response.status });
         return false;
       }
-
-      logger.info('[Email] Password reset email sent', { to });
-      return true;
     } catch (err) {
-      // Never expose Resend internals to the caller
-      logger.error('[Email] Failed to send password reset email', {
-        to,
-        error: err instanceof Error ? err.message : String(err),
+      // Never expose AWS SES internals to the caller
+      if (axios.isAxiosError(err)) {
+        logger.error('[Email] Failed to send password reset email', {
+          to,
+          error: err.message,
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          responseData: err.response?.data,
+          apiKeyPresent: !!env.email.apiKey,
+          apiKeyLength: env.email.apiKey?.length || 0,
+        });
+      } else {
+        logger.error('[Email] Failed to send password reset email', {
+          to,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Generic method to send emails via AWS SES for future use cases
+   * (e.g., welcome emails, notifications, etc.)
+   */
+  async sendEmail(
+    to: string | string[],
+    subject: string,
+    bodyText: string,
+    bodyHtml: string,
+    options?: {
+      cc?: string[];
+      bcc?: string[];
+      replyTo?: string;
+      priority?: number;
+      metadata?: Record<string, string>;
+    },
+  ): Promise<boolean> {
+    const apiKey = env.email.apiKey;
+    const apiEndpoint = env.email.apiEndpoint;
+
+    if (!apiKey || !apiEndpoint) {
+      logger.warn('[Email] Skipping email — EMAIL_API_KEY or EMAIL_API_ENDPOINT not configured', { to });
+      return false;
+    }
+
+    try {
+      const client = getEmailClient();
+
+      const payload: SendEmailPayload = {
+        fromEmail: env.email.fromEmail,
+        toEmails: Array.isArray(to) ? to : [to],
+        subject,
+        bodyText,
+        bodyHtml,
+        ccEmails: options?.cc,
+        bccEmails: options?.bcc,
+        replyTo: options?.replyTo ?? env.email.replyToEmail,
+        priority: options?.priority ?? 8,
+        maxRetries: 5,
+        metadata: options?.metadata,
+      };
+
+      const response = await client.post('/send', payload, {
+        headers: {
+          'x-api-key': env.email.apiKey,
+        },
       });
+
+      if (response.status === 200 || response.status === 202) {
+        logger.info('[Email] Email sent successfully', { to, subject, status: response.status });
+        return true;
+      } else {
+        logger.error('[Email] AWS SES API returned unexpected status', { to, status: response.status });
+        return false;
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        logger.error('[Email] Failed to send email', {
+          to,
+          subject,
+          error: err.message,
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          responseData: err.response?.data,
+        });
+      } else {
+        logger.error('[Email] Failed to send email', {
+          to,
+          subject,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
       return false;
     }
   }

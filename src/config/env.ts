@@ -40,8 +40,10 @@ export const env = {
   },
 
   email: {
-    resendApiKey:          process.env.RESEND_API_KEY ?? '',
-    from:                  process.env.EMAIL_FROM     ?? 'Frontlines Edutech <noreply@frontlinesedutech.com>',
+    apiKey:                process.env.EMAIL_API_KEY ?? '',
+    apiEndpoint:           process.env.EMAIL_API_ENDPOINT ?? '',
+    fromEmail:             process.env.EMAIL_FROM_ADDRESS ?? 'noreply@frontlinesedutech.com',
+    replyToEmail:          process.env.EMAIL_REPLY_TO_ADDRESS ?? 'support@frontlinesedutech.com',
     frontendUrl:           process.env.FRONTEND_URL   ?? 'http://localhost:5173',
     passwordResetExpiresMins: parseInt(process.env.PASSWORD_RESET_EXPIRES_MINUTES ?? '30', 10),
   },
@@ -50,14 +52,15 @@ export const env = {
 // ─── Startup warning — email disabled when key is missing / placeholder ───────
 
 (function warnIfEmailDisabled() {
-  const key = env.email.resendApiKey;
-  const isPlaceholder = !key || key === 're_your_api_key_here' || key.startsWith('re_your');
-  if (isPlaceholder) {
+  const apiKey = env.email.apiKey;
+  const apiEndpoint = env.email.apiEndpoint;
+  
+  if (!apiKey || !apiEndpoint) {
     // eslint-disable-next-line no-console
     console.warn(
-      '⚠️  [Email] RESEND_API_KEY is not configured. ' +
+      '⚠️  [Email] EMAIL_API_KEY or EMAIL_API_ENDPOINT is not configured. ' +
       'Password reset emails will NOT be delivered. ' +
-      'Set RESEND_API_KEY in .env to enable.',
+      'Set EMAIL_API_KEY and EMAIL_API_ENDPOINT in .env to enable.',
     );
   }
 })();

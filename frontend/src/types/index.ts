@@ -289,3 +289,54 @@ export interface DashboardResponse {
   recentCourses: DashboardRecentCourse[];
   recentBatches: DashboardRecentBatch[];
 }
+
+// ─── Batch Resources ──────────────────────────────────────────────────────────
+
+export const RESOURCE_TYPES = [
+  'SYLLABUS',
+  'PROJECT_DOCUMENT',
+  'ASSIGNMENT',
+  'INTERVIEW_QUESTION',
+  'PPT',
+  'NOTE',
+  'CHEAT_SHEET',
+  'PLACEMENT_MATERIAL',
+] as const;
+
+export type ResourceType = typeof RESOURCE_TYPES[number];
+
+export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
+  SYLLABUS:           'Syllabus',
+  PROJECT_DOCUMENT:   'Project Documents',
+  ASSIGNMENT:         'Assignments',
+  INTERVIEW_QUESTION: 'Interview Questions',
+  PPT:                'PPTs',
+  NOTE:               'Notes',
+  CHEAT_SHEET:        'Cheat Sheets',
+  PLACEMENT_MATERIAL: 'Placement Materials',
+};
+
+export interface BatchResource {
+  id: string;
+  batchId: string;
+  resourceType: ResourceType;
+  resourceTypeLabel: string;
+  title: string;
+  description: string | null;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number | null;
+  mimeType: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBatchResourceRequest {
+  resourceType: ResourceType;
+  title: string;
+  description?: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize?: number;
+  mimeType?: string;
+}
